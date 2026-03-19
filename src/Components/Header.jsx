@@ -1,0 +1,56 @@
+import { useContext } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { AuthContext } from "../App";
+import ThemeToggle from "./ThemeToggle"; 
+import { useDispatch, useSelector } from "react-redux";
+import { clearUser } from "../redux/userSlice";
+
+function Header() {
+    const user = useSelector((state) => state.user.user)
+    const dispatch = useDispatch()
+
+    return (
+        <>
+            <header>
+                <nav className="navbar-container">
+
+                    <div className="navbar-logo">
+                        <Link to="/">OYN</Link>
+
+                    </div>
+
+                    <div className="navbar-links">
+                        <Link to="/">Home</Link>
+                        <Link to="/gallery">Gallery</Link>
+                        <Link to="/photoshoots">Photoshoots</Link>
+                        <Link to="/company">Company</Link>
+                    </div>
+                    
+                    <ThemeToggle />
+
+                    {user ?
+
+                        (<div className="navbar-buttons">
+                            <Link to={`/profile/${user.role}/${user.id}`}>
+                                {user.role === "company" ? user.companyName : user.username}
+                            </Link>
+                            <button className="navbar-logout" onClick={() => dispatch(clearUser())}>Logout</button>
+                        </div>) :
+
+                        (<div className="navbar-buttons">
+                            <Link to="/registration">REG</Link>
+                            <Link to="/login">LOGIN</Link>
+                        </div>)
+                    }
+
+
+
+                </nav>
+            </header>
+
+            <hr />
+        </>
+    )
+}
+
+export default Header;

@@ -1,0 +1,218 @@
+{
+  "users": [
+    {
+      "id": "1",
+      "email": "admin@example.com",
+      "password": "$2b$10$DxEHovl0E.jdsK6BAlNNheZAwaId8GqisraRjcsTAmtqw.0ltpGc.",
+      "role": "admin",
+      "avatarUrl": "default-avatar.jpg",
+      "username": "ADMIN"
+    },
+    {
+      "id": "11",
+      "email": "www.ayanpro@gmail.com",
+      "password": "$2b$10$DzlwBnRQQSApMrSLL3IEg.4XCoA7s1k8W39aRPAZ3JzqpNxp7H.zS",
+      "role": "user",
+      "balance": 41901,
+      "avatarUrl": "me.jpg",
+      "username": "Ayan"
+    },
+    {
+      "id": "5",
+      "email": "nina.photo@example.com",
+      "password": "$2b$10$rSnuw9TR32Ut9PcMrdq12upR3oObFTPEVRN6oRTavMrfbeUljSjvm",
+      "role": "professor",
+      "avatarUrl": "ho.jpg",
+      "username": "Nina",
+      "specialization": "Portrait Photography",
+      "sales": 15000
+    },
+    {
+      "id": "6",
+      "email": "ivan.lens@example.com",
+      "password": "$2b$10$KU7.qyVWZ19hON9IUxJJN.PbQdI1QBQsF9cOSZNXvEUqwv2j4Jyw6",
+      "role": "professor",
+      "avatarUrl": "amber.jpg",
+      "username": "Ivan",
+      "specialization": "Nature Photography",
+      "sales": 65997
+    },
+    {
+      "id": "7",
+      "email": "kate.studio@example.com",
+      "password": "$2b$10$2HFmMwfzw0UIsLgjYW4T3udRwhC0PchJFy2i1gisj/UZL1Pq/kSh2",
+      "role": "professor",
+      "avatarUrl": "cdd1df795c8a44f643178cb9c741c702.jpg",
+      "username": "Kate",
+      "specialization": "Studio Photography",
+      "sales": 0
+    },
+    {
+      "id": "b5b6",
+      "email": "sony@sony.com",
+      "password": "$2b$10$dng8WzbhsjOpBOXmeeMrCek/R2JILXq9V4Pz9zn9nMwnHUKL/R9yS",
+      "role": "company",
+      "avatarUrl": "sony-profile.jpg",
+      "companyName": "Sony",
+      "website": "https://www.sony.com/en/",
+      "logo": "sony.jpg"
+    },
+    {
+      "id": "ea93",
+      "email": "forbes@forbes.com",
+      "password": "$2b$10$kpqF0Sr23I5i5SAS6DEgfOFuZKaaJYFGX7Jm8ZyzEqnry.aWB6V2m",
+      "role": "company",
+      "avatarUrl": "forbes-profile.jpg",
+      "companyName": "Forbes",
+      "website": "https://www.forbes.com/",
+      "logo": "forbes.jpg"
+    },
+    {
+      "id": "2091",
+      "email": "bazaar@bazaar.com",
+      "password": "$2b$10$he2aR85XWAl906WNTDtE3OiK06qeKr4b.gb8mtStceiYwJJN/Y3b6",
+      "role": "company",
+      "avatarUrl": "bazaar-profile.jpg",
+      "companyName": "BaZaaR",
+      "website": "https://harpersbazaar.kz/",
+      "logo": "bazaar.jpg"
+    },
+    {
+      "id": "919e",
+      "email": "info@fifa.org",
+      "password": "$2b$10$iAf8TI0PZooW9lMLo1JxY.cIuWqKsi8fmiuFsitGHGcATqCvdKXL.",
+      "role": "company",
+      "avatarUrl": "fifa-fifa.jpg",
+      "companyName": "FIFA",
+      "website": "https://www.fifa.com/",
+      "logo": "fifa.jpg"
+    },
+    {
+      "id": "9fc0",
+      "email": "canon@canon.com",
+      "password": "$2b$10$XU3AHKc8txV9uWTRYNCnfeatJGA16GFY7pantKnTKz.P3wBl1HLMG",
+      "role": "company",
+      "avatarUrl": "default-avatar.jpg",
+      "companyName": "CANON",
+      "website": "https://global.canon/",
+      "logo": "canon.jpg"
+    },
+    {
+      "id": "ab33",
+      "email": "vasya.company@gmail.com",
+      "password": "$2b$10$iYeL3/E3QUS76s4rkD2Q0efYsSSv9kJ4zb844KEeJ3sat8TD2ej9S",
+      "role": "company",
+      "balance": 0,
+      "avatarUrl": "vasya.jpg",
+      "companyName": "Vasya's Company",
+      "website": "https://www.volza.com/company-profile/vasya-co.-ltd.-1385031/",
+      "logo": "logo-vasya.jpg"
+    }
+  ],
+  "gallery": [
+    {
+      "id": "8",
+      "title": "Sunset by the Lake 4",
+      "description": "A beautiful golden hour by the lake shore.",
+      "imageUrl": "sunset.jpg",
+      "authorId": "5"
+    },
+    {
+      "id": "9",
+      "title": "Urban Lights 2",
+      "description": "City lights at night with long exposure.",
+      "imageUrl": "city.jpg",
+      "authorId": "6"
+    },
+    {
+      "id": "10",
+      "title": "Studio Glam",
+      "description": "Elegant portrait in a studio setting.",
+      "imageUrl": "studio.jpg",
+      "authorId": "7"
+    },
+    {
+      "id": "11",
+      "title": "Mountain Adventure",
+      "description": "A breathtaking view from the top of the mountain during sunrise.",
+      "imageUrl": "mountain.jpg",
+      "authorId": "5"
+    },
+    {
+      "id": "12",
+      "title": "City Skyline",
+      "description": "A stunning view of the city skyline at dusk.",
+      "imageUrl": "city_skyline.jpg",
+      "authorId": "6"
+    },
+    {
+      "id": "13",
+      "title": "Beach Vibes",
+      "description": "Golden hour on a beautiful beach with soft waves.",
+      "imageUrl": "beach.jpg",
+      "authorId": "7"
+    }
+  ],
+  "cart-photos": [],
+  "photoshoots": [
+    {
+      "id": "1",
+      "title": "Family Portrait Session",
+      "description": "Capture your family's best moments with a professional photo shoot.",
+      "price": 15000,
+      "authorId": "5",
+      "imageUrl": "family.jpg"
+    },
+    {
+      "id": "fc31",
+      "title": "Sunset Picnic Love Story",
+      "description": "This photoshoot is designed for couples who want to capture tender, romantic moments during golden hour. Set in nature with a cozy blanket, a basket of fruit, and soft, intimate gestures.",
+      "price": 21999,
+      "authorId": "6",
+      "imageUrl": "sunset-picnic.jpg"
+    },
+    {
+      "id": "40b1",
+      "title": "Paws & Personality",
+      "description": "A heartwarming photoshoot for pet lovers! Whether at home or outdoors, we capture the playful spirit, quirky habits, and deep bond between you and your furry friend.",
+      "price": 30000,
+      "authorId": "7",
+      "imageUrl": "vasya.jpg"
+    }
+  ],
+  "cart-photoshoots": [
+    {
+      "id": "ac30",
+      "userId": "11",
+      "photoshootId": "fc31",
+      "dateTime": "2025-05-02T09:00:00.000Z"
+    }
+  ],
+  "vacancies": [
+    {
+      "id": "f23c",
+      "title": "Creative Technology Specialist",
+      "description": "Sony is a global creative entertainment company with a portfolio that spans electronics, gaming, music, film, and technology. We believe in pushing boundaries, empowering creators, and making imagination real. Join us and shape the future of entertainment and innovation.",
+      "location": "Tokyo, Japan / Remote-Friendly",
+      "salary": "150000",
+      "companyId": "b5b6"
+    },
+    {
+      "id": "8083",
+      "title": "Кормить васю",
+      "description": "Надо кормить Васю, играться и гладить",
+      "location": "Васялэнд",
+      "salary": "1000000",
+      "companyId": "ab33"
+    },
+    {
+      "id": "e954",
+      "title": "вася",
+      "description": "вася",
+      "location": "вася",
+      "salary": "123456",
+      "companyId": "ab33"
+    }
+  ],
+  "vacancyRegistrations": []
+}
