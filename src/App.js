@@ -22,6 +22,7 @@ import { apiFetch, legacyApiBaseUrl } from "./lib/api";
 import CourseCatalog from "./Pages/CoursePage/CourseCatalog";
 import CourseLandingPage from "./Pages/CoursePage/CourseLandingPage";
 import LessonViewer from "./Pages/LessonPage/LessonViewer";
+import VerifyEmail from "./Pages/VerifyEmailPage/VerifyEmail";
 
 export const AuthContext = createContext();
 export const GalleryContext = createContext();
@@ -85,6 +86,7 @@ function App() {
                 <Routes>
                   <Route path="/login" element={<Login />} />
                   <Route path="/registration" element={<Registration />} />
+                  <Route path="/verify-email" element={<VerifyEmail />} />
 
                   <Route path="/" element={<IndexPage />} />
                   <Route path="/gallery" element={<GalleryPage />} />

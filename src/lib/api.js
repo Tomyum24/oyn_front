@@ -30,7 +30,16 @@ export async function apiFetch(endpoint, options = {}) {
   }
 
   if (response.status === 403) {
-    throw new Error("Forbidden - insufficient permissions.");
+    let errorMsg = "Forbidden - insufficient permissions.";
+    try {
+      const errorData = await response.json();
+      errorMsg = errorData.message || errorMsg;
+    } catch (e) {
+      // Not JSON
+    }
+    const error = new Error(errorMsg);
+    error.status = 403;
+    throw error;
   }
 
   if (response.status === 429) {
