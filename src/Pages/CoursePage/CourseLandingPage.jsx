@@ -8,98 +8,188 @@ import { apiFetch } from "../../lib/api";
 function CourseLandingPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
+
   const [course, setCourse] = useState(null);
   const [email, setEmail] = useState("");
   const [isEnrolling, setIsEnrolling] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
     apiFetch(`/api/courses/${slug}`)
       .then(data => setCourse(data))
       .catch(err => {
-        if (err.status === 404) {
-          toast.error("Course not found");
-        } else {
-          console.error("Error fetching course:", err);
-        }
+        if (err.status === 404) toast.error("Course not found");
       });
   }, [slug]);
 
   const handleEnrollment = async (e) => {
     e.preventDefault();
     setIsEnrolling(true);
-    
+
     try {
       await apiFetch(`/api/enrollments`, {
         method: "POST",
-        body: JSON.stringify({ email: email, courseId: course.id })
+        body: JSON.stringify({
+          email,
+          courseId: course.id
+        })
       });
 
-      toast.success("Successfully enrolled!");
-      // If there is a first lesson, navigate there
-      if (course.lessons && course.lessons.length > 0) {
+      toast.success("You are enrolled 🎉");
+
+      if (course.lessons?.length > 0) {
         navigate(`/courses/${slug}/lessons/${course.lessons[0].slug}`);
       }
     } catch (error) {
       if (error.status === 409) {
-        toast.info("You are already enrolled in this course!");
-        if (course.lessons && course.lessons.length > 0) {
-          navigate(`/courses/${slug}/lessons/${course.lessons[0].slug}`);
-        }
-      } else if (error.status === 429) {
-        toast.error("Too many requests. Please slow down.");
+        toast.info("Already enrolled");
       } else {
-        toast.error(`Enrollment failed: ${error.message || "Unknown error"}`);
+        toast.error("Enrollment failed");
       }
     } finally {
       setIsEnrolling(false);
     }
   };
 
-  if (!course) return <div><Header/><p style={{padding:'40px'}}>Loading...</p><Footer/></div>;
+  if (!course) {
+    return (
+      <>
+        <Header />
+        <p style={{ padding: 40 }}>Loading...</p>
+        <Footer />
+      </>
+    );
+  }
 
   return (
-    <>
-      <Header />
-      <div className="course-landing" style={{ padding: '40px' }}>
-        <h1>{course.title}</h1>
-        <p><strong>Level:</strong> {course.level}</p>
-        <p><strong>Duration:</strong> {course.durationHours} hours</p>
-        <p><strong>Locale:</strong> {course.locale}</p>
-        
-        <div className="enrollment-section" style={{ marginTop: '30px', padding: '20px', border: '1px solid #ddd', borderRadius: '8px' }}>
-          <h2>Ready to start? Enroll now!</h2>
-          <form onSubmit={handleEnrollment} style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-            <input 
-              type="email" 
-              placeholder="Enter your email" 
-              value={email} 
-              onChange={(e) => setEmail(e.target.value)} 
-              required 
-              style={{ padding: '10px', width: '300px' }}
-            />
-            <button type="submit" disabled={isEnrolling} style={{ padding: '10px 20px', cursor: 'pointer' }}>
-              {isEnrolling ? "Enrolling..." : "Enroll"}
-            </button>
-          </form>
-        </div>
+<>
+  <Header />
 
-        <div className="course-content" style={{ marginTop: '40px' }}>
-          <h2>Course Syllabus</h2>
-          {course.lessons && course.lessons.length > 0 ? (
-            <ul style={{ listStyle: 'none', padding: 0 }}>
-              {course.lessons.map(lesson => (
-                <li key={lesson.id} style={{ padding: '10px', borderBottom: '1px solid #ccc' }}>
-                  <strong>Lesson {lesson.position}:</strong> <Link to={`/courses/${slug}/lessons/${lesson.slug}`}>{lesson.title}</Link> ({lesson.durationMinutes} min)
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p>No lessons available for this course yet.</p>
-          )}
+  {/* HERO */}
+  <div className="hero-section">
+    <div className="hero-content">
+      <div className="breadcrumb">
+        <Link to="/">Home</Link> / <span className="active">Course</span>
+      </div>
+
+      <h1 className="hero-title">Course Details</h1>
+    </div>
+
+    <div className="hero-image">
+      <img src={course.imageUrl} alt={course.title} />
+    </div>
+  </div>
+
+  {/* TABS */}
+  <div className="tabs-container">
+    <button
+      className={`tab ${activeTab === "overview" ? "active" : ""}`}
+      onClick={() => setActiveTab("overview")}
+    >
+      Overview
+    </button>
+
+    <button
+      className={`tab ${activeTab === "curriculum" ? "active" : ""}`}
+      onClick={() => setActiveTab("curriculum")}
+    >
+      Curriculum
+    </button>
+  </div>
+
+  {/* MAIN */}
+  <div className="course-container">
+
+    {/* LEFT */}
+    <div className="course-main">
+
+      <img
+        src={course.imageUrl}
+        alt={course.title}
+        className="course-image"
+      />
+
+      <div className="course-info">
+        <h2 className="course-title">{course.title}</h2>
+
+        <div className="course-meta">
+          <span>🕒 {course.durationHours} hours</span>
+          <span>📊 {course.level}</span>
+          <span>🌐 {course.locale}</span>
         </div>
       </div>
-      <Footer />
-    </>
+
+      <div className="tab-content">
+
+        {activeTab === "overview" && (
+          <>
+            <h3>Course Description</h3>
+            <p>{course.description}</p>
+
+            <h3>What you will learn</h3>
+            <ul>
+              {course.learningOutcomes?.map((item, i) => (
+                <li key={i}>{item}</li>
+              ))}
+            </ul>
+          </>
+        )}
+
+        {activeTab === "curriculum" && (
+          <ul className="lesson-list">
+            {course.lessons?.map((lesson) => (
+              <li key={lesson.id}>
+                <strong>Lesson {lesson.position}:</strong>{" "}
+                <Link to={`/courses/${slug}/lessons/${lesson.slug}`}>
+                  {lesson.title}
+                </Link>
+                <span> ({lesson.durationMinutes} min)</span>
+              </li>
+            ))}
+          </ul>
+        )}
+
+      </div>
+    </div>
+
+    {/* RIGHT SIDEBAR */}
+    <div className="course-sidebar">
+
+      <img
+        src={course.imageUrl}
+        alt="preview"
+        className="sidebar-image"
+      />
+
+      <div className="course-price">
+        Free Course
+      </div>
+
+      <form onSubmit={handleEnrollment} className="enroll-form">
+        <input
+          type="email"
+          placeholder="Enter your email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+
+        <button type="submit" disabled={isEnrolling}>
+          {isEnrolling ? "Enrolling..." : "Enroll Now"}
+        </button>
+      </form>
+
+      <div className="course-details">
+        <p><strong>Lessons:</strong> {course.lessons?.length || 0}</p>
+        <p><strong>Level:</strong> {course.level}</p>
+        <p><strong>Language:</strong> {course.locale}</p>
+      </div>
+
+    </div>
+  </div>
+
+  <Footer />
+</>
   );
 }
 

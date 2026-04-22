@@ -76,11 +76,13 @@ function Registration() {
       fullName = formData.companyName.trim();
     }
 
+    const ROLE_MAP = { student: "STUDENT", professor: "TEACHER", company: "COMPANY" };
+
     const newUser = {
       fullName,
       email: formData.email,
       password: formData.password,
-      role: role.toUpperCase(),
+      role: ROLE_MAP[role] ?? role.toUpperCase(),
     };
 
     setLoading(true);
