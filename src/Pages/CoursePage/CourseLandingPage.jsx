@@ -4,7 +4,7 @@ import Header from "../../Components/Header";
 import Footer from "../../Components/Footer";
 import { toast } from "react-toastify";
 import { apiFetch } from "../../lib/api";
-
+import styles from "./CourseLandingPage.module.css";
 function CourseLandingPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
@@ -63,132 +63,106 @@ function CourseLandingPage() {
 
   return (
 <>
+ <div className={styles.wrapper}>
+
   <Header />
 
   {/* HERO */}
-  <div className="hero-section">
-    <div className="hero-content">
-      <div className="breadcrumb">
-        <Link to="/">Home</Link> / <span className="active">Course</span>
-      </div>
-
-      <h1 className="hero-title">Course Details</h1>
-    </div>
-
-    <div className="hero-image">
-      <img src={course.imageUrl} alt={course.title} />
-    </div>
-  </div>
-
-  {/* TABS */}
-  <div className="tabs-container">
-    <button
-      className={`tab ${activeTab === "overview" ? "active" : ""}`}
-      onClick={() => setActiveTab("overview")}
-    >
-      Overview
-    </button>
-
-    <button
-      className={`tab ${activeTab === "curriculum" ? "active" : ""}`}
-      onClick={() => setActiveTab("curriculum")}
-    >
-      Curriculum
-    </button>
-  </div>
-
-  {/* MAIN */}
-  <div className="course-container">
-
-    {/* LEFT */}
-    <div className="course-main">
-
+  <div className={styles.hero}>
+    <div className={styles.heroLeft}>
       <img
         src={course.imageUrl}
         alt={course.title}
-        className="course-image"
+        className={styles.heroImage}
       />
 
-      <div className="course-info">
-        <h2 className="course-title">{course.title}</h2>
+      <h1 className={styles.title}>{course.title}</h1>
 
-        <div className="course-meta">
-          <span>🕒 {course.durationHours} hours</span>
-          <span>📊 {course.level}</span>
-          <span>🌐 {course.locale}</span>
-        </div>
+      <div className={styles.meta}>
+        <span>🕒 {course.durationHours} hours</span>
+        <span>📊 {course.level}</span>
+        <span>🌐 {course.locale}</span>
       </div>
 
-      <div className="tab-content">
+      {/* TABS */}
+      <div className={styles.tabs}>
+        <button
+          className={`${styles.tab} ${activeTab === "overview" ? styles.activeTab : ""}`}
+          onClick={() => setActiveTab("overview")}
+        >
+          Overview
+        </button>
 
-        {activeTab === "overview" && (
-          <>
-            <h3>Course Description</h3>
-            <p>{course.description}</p>
-
-            <h3>What you will learn</h3>
-            <ul>
-              {course.learningOutcomes?.map((item, i) => (
-                <li key={i}>{item}</li>
-              ))}
-            </ul>
-          </>
-        )}
-
-        {activeTab === "curriculum" && (
-          <ul className="lesson-list">
-            {course.lessons?.map((lesson) => (
-              <li key={lesson.id}>
-                <strong>Lesson {lesson.position}:</strong>{" "}
-                <Link to={`/courses/${slug}/lessons/${lesson.slug}`}>
-                  {lesson.title}
-                </Link>
-                <span> ({lesson.durationMinutes} min)</span>
-              </li>
-            ))}
-          </ul>
-        )}
-
+        <button
+          className={`${styles.tab} ${activeTab === "curriculum" ? styles.activeTab : ""}`}
+          onClick={() => setActiveTab("curriculum")}
+        >
+          Curriculum
+        </button>
       </div>
     </div>
 
-    {/* RIGHT SIDEBAR */}
-    <div className="course-sidebar">
+    {/* SIDEBAR */}
+    <div className={styles.sidebar}>
+      <img src={course.imageUrl} className={styles.sidebarImage} />
 
-      <img
-        src={course.imageUrl}
-        alt="preview"
-        className="sidebar-image"
-      />
+      <div className={styles.price}>Free Course</div>
 
-      <div className="course-price">
-        Free Course
-      </div>
-
-      <form onSubmit={handleEnrollment} className="enroll-form">
+      <form onSubmit={handleEnrollment}>
         <input
+          className={styles.input}
           type="email"
-          placeholder="Enter your email"
+          placeholder="Enter email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          required
         />
 
-        <button type="submit" disabled={isEnrolling}>
+        <button className={styles.enrollBtn}>
           {isEnrolling ? "Enrolling..." : "Enroll Now"}
         </button>
       </form>
 
-      <div className="course-details">
-        <p><strong>Lessons:</strong> {course.lessons?.length || 0}</p>
-        <p><strong>Level:</strong> {course.level}</p>
-        <p><strong>Language:</strong> {course.locale}</p>
+      <div>
+        <p>Lessons: {course.lessons?.length}</p>
+        <p>Level: {course.level}</p>
+        <p>Language: {course.locale}</p>
       </div>
+    </div>
+  </div>
+
+  {/* CONTENT */}
+  <div className={styles.content}>
+    <div className={styles.main}>
+
+      {activeTab === "overview" && (
+        <>
+          <h3 className={styles.sectionTitle}>Course Description</h3>
+          <p className={styles.description}>{course.description}</p>
+
+          <h3 className={styles.sectionTitle}>What you will learn</h3>
+          <ul>
+            {course.learningOutcomes?.map((item, i) => (
+              <li key={i}>{item}</li>
+            ))}
+          </ul>
+        </>
+      )}
+
+      {activeTab === "curriculum" && (
+        <ul>
+          {course.lessons?.map((lesson) => (
+            <li key={lesson.id}>
+              {lesson.title} ({lesson.durationMinutes} min)
+            </li>
+          ))}
+        </ul>
+      )}
 
     </div>
   </div>
 
   <Footer />
+</div>
 </>
   );
 }

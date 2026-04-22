@@ -1,0 +1,123 @@
+.wrapper {
+  background: #f8f9fc;
+}
+
+/* HERO */
+.hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 40px;
+  padding: 60px 80px;
+  background: #f5f3f8;
+}
+
+.heroLeft {
+  flex: 2;
+}
+
+.heroImage {
+  width: 100%;
+  border-radius: 16px;
+  object-fit: cover;
+}
+
+/* TITLE */
+.title {
+  font-size: 32px;
+  font-weight: 700;
+  margin-top: 20px;
+  color: #1a1a2e;
+}
+
+.meta {
+  display: flex;
+  gap: 20px;
+  margin-top: 10px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+/* TABS */
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin-top: 25px;
+}
+
+.tab {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  background: #eee;
+  cursor: pointer;
+}
+
+.activeTab {
+  background: #7c5cfc;
+  color: white;
+}
+
+/* MAIN LAYOUT */
+.content {
+  display: flex;
+  gap: 40px;
+  padding: 60px 80px;
+}
+
+/* LEFT */
+.main {
+  flex: 3;
+}
+
+/* RIGHT SIDEBAR */
+.sidebar {
+  flex: 1;
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  height: fit-content;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.05);
+}
+
+.sidebarImage {
+  width: 100%;
+  border-radius: 12px;
+  margin-bottom: 15px;
+}
+
+.price {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.enrollBtn {
+  width: 100%;
+  padding: 12px;
+  background: #7c5cfc;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+/* TEXT */
+.sectionTitle {
+  font-size: 20px;
+  font-weight: 700;
+  margin-top: 25px;
+}
+
+.description {
+  color: #555;
+  line-height: 1.6;
+  margin-top: 10px;
+}
