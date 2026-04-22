@@ -6,6 +6,43 @@ import { apiFetch } from "../../lib/api";
 import { toast } from "react-toastify";
 import "./LessonViewer.css";
 
+function getEmbedUrl(url) {
+  if (!url) return null;
+  const ytMatch = url.match(
+    /(?:youtube\.com\/watch\?(?:.*&)?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+  );
+  if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`;
+  const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
+  if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+  return null;
+}
+
+function VideoPlayer({ videoUrl }) {
+  const embedUrl = getEmbedUrl(videoUrl);
+  if (embedUrl) {
+    return (
+      <div className="video-container">
+        <iframe
+          src={embedUrl}
+          title="Lesson video"
+          frameBorder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          style={{ width: "100%", aspectRatio: "16/9", borderRadius: 8 }}
+        />
+      </div>
+    );
+  }
+  return (
+    <div className="video-container">
+      <video controls style={{ width: "100%" }}>
+        <source src={videoUrl} type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
+    </div>
+  );
+}
+
 function LessonViewer() {
   const { courseSlug, lessonSlug } = useParams();
   const [lessonData, setLessonData] = useState(null);
@@ -83,12 +120,7 @@ function LessonViewer() {
           {/* Video Section */}
           <div className="video-section">
             {lessonData.videoUrl ? (
-              <div className="video-container">
-                <video controls>
-                  <source src={lessonData.videoUrl} type={lessonData.videoContentType || "video/mp4"} />
-                  Your browser does not support the video tag.
-                </video>
-              </div>
+              <VideoPlayer videoUrl={lessonData.videoUrl} />
             ) : (
               <div className="video-placeholder">
                 <button className="play-button">▶</button>

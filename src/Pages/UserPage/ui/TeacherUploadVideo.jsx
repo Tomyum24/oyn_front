@@ -1,102 +1,107 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { apiFetch } from "../../../lib/api";
 import { toast } from "react-toastify";
 
+function getVideoPreviewUrl(url) {
+    if (!url) return null;
+    // YouTube: youtube.com/watch?v=ID or youtu.be/ID
+    const ytMatch = url.match(
+        /(?:youtube\.com\/watch\?(?:.*&)?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+    );
+    if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`;
+    // Vimeo
+    const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
+    if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+    return null;
+}
+
+function VideoPreview({ url }) {
+    const embedUrl = getVideoPreviewUrl(url);
+    if (!embedUrl) return null;
+    return (
+        <div className="lms-video-preview">
+            <iframe
+                src={embedUrl}
+                title="Preview"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+            />
+        </div>
+    );
+}
+
+function parseDuration(str) {
+    const parts = str.trim().split(":").map(Number);
+    if (parts.some(isNaN)) return 0;
+    if (parts.length === 2) return parts[0] * 60 + parts[1];
+    if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+    return 0;
+}
+
 function TeacherUploadVideo() {
     const [courses, setCourses] = useState([]);
-    const [form, setForm] = useState({ courseSlug: "", title: "", summary: "", duration: "", content: "Video lesson" });
-    const [file, setFile] = useState(null);
+    const [form, setForm] = useState({
+        courseSlug: "",
+        title: "",
+        summary: "",
+        duration: "",
+        videoUrl: "",
+    });
     const [loading, setLoading] = useState(false);
-    const fileRef = useRef(null);
 
     useEffect(() => {
         apiFetch("/api/teacher/courses").then(setCourses).catch(() => {});
     }, []);
 
-    function parseDuration(str) {
-        const parts = str.split(":").map(Number);
-        if (parts.length === 2) return parts[0] * 60 + parts[1];
-        if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
-        return 0;
+    function set(field, value) {
+        setForm(f => ({ ...f, [field]: value }));
     }
 
     async function handleSubmit(e) {
         e.preventDefault();
         if (!form.courseSlug) { toast.error("Select a course"); return; }
-        if (!form.title.trim()) { toast.error("Enter video title"); return; }
+        if (!form.videoUrl.trim()) { toast.error("Enter a video URL"); return; }
+
         const durationMinutes = parseDuration(form.duration);
         if (!durationMinutes) { toast.error("Enter valid duration (MM:SS or HH:MM:SS)"); return; }
 
         setLoading(true);
         try {
-            // 1. Create lesson
-            const lesson = await apiFetch(`/api/teacher/courses/${form.courseSlug}/lessons`, {
+            await apiFetch(`/api/teacher/courses/${form.courseSlug}/lessons`, {
                 method: "POST",
                 body: JSON.stringify({
                     title: form.title.trim(),
                     summary: form.summary.trim(),
-                    content: form.content || form.title.trim(),
+                    content: form.summary.trim() || form.title.trim(),
+                    videoUrl: form.videoUrl.trim(),
                     durationMinutes,
                 }),
             });
-
-            // 2. If file selected — initiate upload
-            if (file) {
-                const initResp = await apiFetch(
-                    `/api/teacher/courses/${form.courseSlug}/lessons/${lesson.slug}/video-upload`,
-                    {
-                        method: "POST",
-                        body: JSON.stringify({
-                            fileName: file.name,
-                            contentType: file.type || "video/mp4",
-                            sizeBytes: file.size,
-                        }),
-                    }
-                );
-
-                // 3. Upload to provided URL (skip for in-memory local dev)
-                const isInMemory = initResp.uploadUrl?.startsWith("inmemory://");
-                if (!isInMemory) {
-                    const headers = initResp.requiredHeaders || {};
-                    await fetch(initResp.uploadUrl, {
-                        method: "PUT",
-                        headers: { "Content-Type": file.type || "video/mp4", ...headers },
-                        body: file,
-                    });
-                }
-
-                // 4. Complete upload
-                await apiFetch(
-                    `/api/teacher/courses/${form.courseSlug}/lessons/${lesson.slug}/video-upload/complete`,
-                    {
-                        method: "POST",
-                        body: JSON.stringify({ objectKey: initResp.objectKey }),
-                    }
-                );
-            }
-
-            toast.success("Video lesson uploaded!");
-            setForm(f => ({ ...f, title: "", summary: "", duration: "", content: "Video lesson" }));
-            setFile(null);
-            if (fileRef.current) fileRef.current.value = "";
+            toast.success("Video lesson added!");
+            setForm({ courseSlug: form.courseSlug, title: "", summary: "", duration: "", videoUrl: "" });
         } catch (err) {
-            toast.error(err.message || "Upload failed");
+            toast.error(err.message || "Failed to add lesson");
         } finally {
             setLoading(false);
         }
     }
 
+    const previewEmbed = getVideoPreviewUrl(form.videoUrl);
+
     return (
         <div className="lms-panel">
-            <h2>Upload Video Lesson</h2>
-            <p className="lms-subtitle">Add a new video lesson to your course</p>
+            <h2>Add Video Lesson</h2>
+            <p className="lms-subtitle">Add a video lesson using a YouTube or Vimeo link</p>
 
             <form onSubmit={handleSubmit} className="lms-form">
                 <div className="lms-field">
                     <label>Course *</label>
-                    <select value={form.courseSlug} onChange={e => setForm(f => ({ ...f, courseSlug: e.target.value }))} required>
+                    <select value={form.courseSlug} onChange={e => set("courseSlug", e.target.value)} required>
                         <option value="">Select a course</option>
-                        {courses.map(c => <option key={c.id} value={c.slug}>{c.title}</option>)}
+                        {courses.map(c => (
+                            <option key={c.id} value={c.slug}>{c.title}</option>
+                        ))}
                     </select>
                 </div>
 
@@ -105,19 +110,36 @@ function TeacherUploadVideo() {
                     <input
                         placeholder="e.g., Introduction to React Hooks"
                         value={form.title}
-                        onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+                        onChange={e => set("title", e.target.value)}
                         required
                     />
                 </div>
 
                 <div className="lms-field">
-                    <label>Description *</label>
-                    <textarea
-                        placeholder="Provide a brief description of what students will learn"
-                        value={form.summary}
-                        onChange={e => setForm(f => ({ ...f, summary: e.target.value }))}
-                        rows={4}
+                    <label>Video URL *</label>
+                    <input
+                        type="url"
+                        placeholder="https://www.youtube.com/watch?v=..."
+                        value={form.videoUrl}
+                        onChange={e => set("videoUrl", e.target.value)}
                         required
+                    />
+                    <small>Supports YouTube, Vimeo, or any direct video link</small>
+                </div>
+
+                {form.videoUrl && !previewEmbed && (
+                    <p className="lms-url-note">Direct link — will play in browser</p>
+                )}
+
+                {previewEmbed && <VideoPreview url={form.videoUrl} />}
+
+                <div className="lms-field">
+                    <label>Description</label>
+                    <textarea
+                        placeholder="Briefly describe what students will learn"
+                        value={form.summary}
+                        onChange={e => set("summary", e.target.value)}
+                        rows={3}
                     />
                 </div>
 
@@ -126,44 +148,22 @@ function TeacherUploadVideo() {
                     <input
                         placeholder="e.g., 15:30"
                         value={form.duration}
-                        onChange={e => setForm(f => ({ ...f, duration: e.target.value }))}
+                        onChange={e => set("duration", e.target.value)}
                         required
                     />
                     <small>Format: MM:SS or HH:MM:SS</small>
                 </div>
 
-                <div className="lms-field">
-                    <label>Video File</label>
-                    <div
-                        className="lms-dropzone"
-                        onClick={() => fileRef.current?.click()}
-                    >
-                        <input
-                            ref={fileRef}
-                            type="file"
-                            accept="video/mp4,video/mov,video/avi"
-                            style={{ display: "none" }}
-                            onChange={e => setFile(e.target.files[0] || null)}
-                        />
-                        {file ? (
-                            <p className="lms-file-selected">{file.name}</p>
-                        ) : (
-                            <>
-                                <div className="lms-upload-icon">↑</div>
-                                <p>Click to upload video</p>
-                                <small>MP4, MOV, or AVI (max 500MB)</small>
-                            </>
-                        )}
-                    </div>
-                </div>
-
                 <div className="lms-form-actions">
                     <button type="submit" className="lms-btn-primary" disabled={loading}>
-                        {loading ? "Uploading…" : "Upload Video"}
+                        {loading ? "Saving…" : "Add Lesson"}
                     </button>
-                    <button type="button" className="lms-btn-ghost"
-                        onClick={() => { setForm(f => ({ ...f, title: "", summary: "", duration: "" })); setFile(null); }}>
-                        Cancel
+                    <button
+                        type="button"
+                        className="lms-btn-ghost"
+                        onClick={() => setForm(f => ({ ...f, title: "", summary: "", duration: "", videoUrl: "" }))}
+                    >
+                        Clear
                     </button>
                 </div>
             </form>
