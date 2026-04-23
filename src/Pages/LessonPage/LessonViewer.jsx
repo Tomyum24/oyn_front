@@ -7,10 +7,27 @@ import { apiFetch } from "../../lib/api";
 import { toast } from "react-toastify";
 import "./LessonViewer.css";
 
+function CourseStars({ rating }) {
+  const filled = rating ? Math.round(rating) : 0;
+  return (
+    <span
+      className="course-card-stars"
+      title={rating ? `${rating.toFixed(1)} stars` : "Not rated"}
+    >
+      {[1, 2, 3, 4, 5].map((i) => (
+        <span key={i} style={{ color: i <= filled ? "#f59e0b" : "#d1d5db" }}>
+          ★
+        </span>
+      ))}
+    </span>
+  );
+}
+
 function parseAssessment(content) {
   try {
     const parsed = JSON.parse(content);
-    if (parsed.type === "assessment" && Array.isArray(parsed.questions)) return parsed;
+    if (parsed.type === "assessment" && Array.isArray(parsed.questions))
+      return parsed;
   } catch (e) {}
   return null;
 }
@@ -18,7 +35,7 @@ function parseAssessment(content) {
 function getEmbedUrl(url) {
   if (!url) return null;
   const ytMatch = url.match(
-    /(?:youtube\.com\/watch\?(?:.*&)?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+    /(?:youtube\.com\/watch\?(?:.*&)?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
   );
   if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`;
   const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
@@ -37,14 +54,30 @@ function VideoPlayer({ videoUrl }) {
           frameBorder="0"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
-          style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", borderRadius: 0 }}
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            borderRadius: 0,
+          }}
         />
       </div>
     );
   }
   return (
     <div className="video-container">
-      <video controls style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }}>
+      <video
+        controls
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+        }}
+      >
         <source src={videoUrl} type="video/mp4" />
         Your browser does not support the video tag.
       </video>
@@ -75,12 +108,18 @@ function AssessmentUI({ assessment, onComplete }) {
   if (submitted) {
     return (
       <div className="assessment-result">
-        <div className={`score-circle ${score.percent >= 70 ? "pass" : "fail"}`}>
+        <div
+          className={`score-circle ${score.percent >= 70 ? "pass" : "fail"}`}
+        >
           {score.percent}%
         </div>
         <h2>Assessment Complete!</h2>
-        <p>{score.correct} out of {score.total} correct</p>
-        <p className="result-label">{score.percent >= 70 ? "Passed! 🎉" : "Keep studying and try again."}</p>
+        <p>
+          {score.correct} out of {score.total} correct
+        </p>
+        <p className="result-label">
+          {score.percent >= 70 ? "Passed! 🎉" : "Keep studying and try again."}
+        </p>
       </div>
     );
   }
@@ -92,16 +131,21 @@ function AssessmentUI({ assessment, onComplete }) {
       )}
       {assessment.questions.map((q, i) => (
         <div key={i} className="question-block">
-          <p className="question-text">{i + 1}. {q.text}</p>
+          <p className="question-text">
+            {i + 1}. {q.text}
+          </p>
           <div className="options-list">
             {q.options.map((opt, j) => (
-              <label key={j} className={`option-label ${answers[i] === j ? "selected" : ""}`}>
+              <label
+                key={j}
+                className={`option-label ${answers[i] === j ? "selected" : ""}`}
+              >
                 <input
                   type="radio"
                   name={`question-${i}`}
                   value={j}
                   checked={answers[i] === j}
-                  onChange={() => setAnswers(prev => ({ ...prev, [i]: j }))}
+                  onChange={() => setAnswers((prev) => ({ ...prev, [i]: j }))}
                 />
                 <span>{opt}</span>
               </label>
@@ -117,6 +161,8 @@ function AssessmentUI({ assessment, onComplete }) {
 }
 
 function LessonViewer() {
+  const hasContent = (value) =>
+    value && (Array.isArray(value) ? value.length > 0 : true);
   const { courseSlug, lessonSlug } = useParams();
   const navigate = useNavigate();
   const user = useSelector((state) => state.user.user);
@@ -133,20 +179,25 @@ function LessonViewer() {
 
         const [lesson, course] = await Promise.all([
           apiFetch(`/api/courses/${courseSlug}/lessons/${lessonSlug}`),
-          apiFetch(`/api/courses/${courseSlug}`)
+          apiFetch(`/api/courses/${courseSlug}`),
         ]);
         setLessonData(lesson);
         setCourseData(course);
 
         if (user) {
           try {
-            let progress = await apiFetch(`/api/progress/courses/${courseSlug}`);
+            let progress = await apiFetch(
+              `/api/progress/courses/${courseSlug}`,
+            );
             if (progress.status === "NOT_STARTED") {
-              progress = await apiFetch(`/api/progress/courses/${courseSlug}/start`, { method: "POST" });
+              progress = await apiFetch(
+                `/api/progress/courses/${courseSlug}/start`,
+                { method: "POST" },
+              );
             }
             await apiFetch(`/api/progress/courses/${courseSlug}/current-step`, {
               method: "PUT",
-              body: JSON.stringify({ lessonSlug })
+              body: JSON.stringify({ lessonSlug }),
             });
             progress = await apiFetch(`/api/progress/courses/${courseSlug}`);
             setProgressData(progress);
@@ -173,20 +224,26 @@ function LessonViewer() {
 
   const isStepCompleted = (slug) => {
     if (!progressData?.steps) return false;
-    return progressData.steps.find(s => s.lessonSlug === slug)?.status === "COMPLETED";
+    return (
+      progressData.steps.find((s) => s.lessonSlug === slug)?.status ===
+      "COMPLETED"
+    );
   };
 
   const markComplete = async () => {
     try {
       const updated = await apiFetch(
         `/api/progress/courses/${courseSlug}/steps/${lessonSlug}/complete`,
-        { method: "POST" }
+        { method: "POST" },
       );
       setProgressData(updated);
       toast.success("Lesson completed!");
-      const idx = courseData.lessons?.findIndex(l => l.slug === lessonSlug) ?? -1;
+      const idx =
+        courseData.lessons?.findIndex((l) => l.slug === lessonSlug) ?? -1;
       if (idx >= 0 && idx < courseData.lessons.length - 1) {
-        navigate(`/courses/${courseSlug}/lessons/${courseData.lessons[idx + 1].slug}`);
+        navigate(
+          `/courses/${courseSlug}/lessons/${courseData.lessons[idx + 1].slug}`,
+        );
       } else if (updated.status === "COMPLETED") {
         toast.success("You completed the course! 🎉");
       }
@@ -199,7 +256,9 @@ function LessonViewer() {
     return (
       <div>
         <Header />
-        <p style={{ padding: "40px", textAlign: "center" }}>Loading lesson...</p>
+        <p style={{ padding: "40px", textAlign: "center" }}>
+          Loading lesson...
+        </p>
         <Footer />
       </div>
     );
@@ -232,7 +291,8 @@ function LessonViewer() {
       <div className="lesson-viewer-container">
         {/* Breadcrumb */}
         <div className="breadcrumb">
-          <Link to="/">Home</Link> | <Link to="/courses">Courses</Link> | <span className="active">Course Details</span>
+          <Link to="/">Home</Link> | <Link to="/courses">Courses</Link> |{" "}
+          <span className="active">Course Details</span>
         </div>
 
         {/* Progress Bar */}
@@ -240,10 +300,16 @@ function LessonViewer() {
           <div className="progress-bar-container">
             <div className="progress-bar-header">
               <span>Course Progress</span>
-              <span>{progressData.completedSteps} / {progressData.totalSteps} lessons &middot; {progressData.percentComplete}%</span>
+              <span>
+                {progressData.completedSteps} / {progressData.totalSteps}{" "}
+                lessons &middot; {progressData.percentComplete}%
+              </span>
             </div>
             <div className="progress-bar-track">
-              <div className="progress-bar-fill" style={{ width: `${progressData.percentComplete}%` }} />
+              <div
+                className="progress-bar-fill"
+                style={{ width: `${progressData.percentComplete}%` }}
+              />
             </div>
           </div>
         )}
@@ -269,15 +335,15 @@ function LessonViewer() {
               <h1 className="lesson-title">
                 {courseData.title} | Episode {lessonData.position}
               </h1>
-              {user && !assessment && (
-                currentStepCompleted ? (
+              {user &&
+                !assessment &&
+                (currentStepCompleted ? (
                   <span className="completed-badge">✓ Completed</span>
                 ) : (
                   <button className="mark-complete-btn" onClick={markComplete}>
                     ✓ Mark as Complete
                   </button>
-                )
-              )}
+                ))}
             </div>
           </div>
 
@@ -285,61 +351,67 @@ function LessonViewer() {
           <div className="playlist-sidebar">
             <h2 className="playlist-title">Course Playlists</h2>
             <div className="playlist-items">
-              {courseData.lessons && courseData.lessons.map((lesson) => (
-                <Link
-                  to={`/courses/${courseSlug}/lessons/${lesson.slug}`}
-                  key={lesson.id}
-                  className="playlist-item-link"
-                >
-                  <div className={`playlist-item ${lesson.slug === lessonSlug ? "active" : ""}`}>
-                    <div className="playlist-thumbnail">
-                      <img
-                        src={lesson.thumbnailUrl || `https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=100`}
-                        alt={lesson.title}
-                      />
-                      {lesson.slug === lessonSlug && <div className="play-icon">▶</div>}
-                      {isStepCompleted(lesson.slug) && <div className="completed-icon">✓</div>}
+              {courseData.lessons &&
+                courseData.lessons.map((lesson) => (
+                  <Link
+                    to={`/courses/${courseSlug}/lessons/${lesson.slug}`}
+                    key={lesson.id}
+                    className="playlist-item-link"
+                  >
+                    <div
+                      className={`playlist-item ${lesson.slug === lessonSlug ? "active" : ""}`}
+                    >
+                      <div className="playlist-thumbnail">
+                        <img
+                          src={
+                            lesson.thumbnailUrl ||
+                            `https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=100`
+                          }
+                          alt={lesson.title}
+                        />
+                        {lesson.slug === lessonSlug && (
+                          <div className="play-icon">▶</div>
+                        )}
+                        {isStepCompleted(lesson.slug) && (
+                          <div className="completed-icon">✓</div>
+                        )}
+                      </div>
+                      <div className="playlist-info">
+                        <h4>{lesson.title}</h4>
+                        <span className="duration">
+                          {lesson.durationMinutes} min
+                        </span>
+                      </div>
                     </div>
-                    <div className="playlist-info">
-                      <h4>{lesson.title}</h4>
-                      <span className="duration">{lesson.durationMinutes} min</span>
-                    </div>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                ))}
             </div>
           </div>
         </div>
 
-        {/* Course Details Section */}
         <div className="details-container">
           <div className="details-left">
             <section className="detail-section">
-              <h2>Course Details</h2>
-              <p>{courseData.description || "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Quis ipsum suspendisse ultrices gravida. Risus commodo viverra maecenas accumsan lacus vel facilisis consectetur adipiscing elit."}</p>
-            </section>
-
-            <section className="detail-section">
-              <h2>Certification</h2>
-              <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Quis ipsum suspendisse ultrices gravida. Risus commodo viverra maecenas accumsan lacus vel facilisis consectetur adipiscing elit.</p>
-            </section>
-
-            <section className="detail-section">
-              <h2>Who this course is for</h2>
-              <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Quis ipsum suspendisse ultrices gravida. Risus commodo viverra maecenas accumsan lacus vel facilisis consectetur adipiscing elit.</p>
-            </section>
-
-            <section className="detail-section">
-              <h2>What you'll learn in this course:</h2>
-              <ul className="learning-list">
-                <li>Lorem ipsum dolor sit amet, consectetur adipiscing elit</li>
-                <li>Lorem ipsum dolor sit amet, consectetur adipiscing elit</li>
-                <li>Lorem ipsum dolor sit amet, consectetur adipiscing elit</li>
-                <li>Lorem ipsum dolor sit amet, consectetur adipiscing elit</li>
-                <li>Lorem ipsum dolor sit amet, consectetur adipiscing elit</li>
-              </ul>
+              {hasContent(courseData.description) && (
+                <section className="detail-section">
+                  <h2>Course Details</h2>
+                  <p>{courseData.description}</p>
+                </section>
+              )}{" "}
             </section>
           </div>
+          {hasContent(courseData.certificationDescription) && (
+            <section className="detail-section">
+              <h2>Certification</h2>
+              <p>{courseData.certificationDescription}</p>
+            </section>
+          )}
+          {hasContent(courseData.targetAudience) && (
+            <section className="detail-section">
+              <h2>Who this course is for</h2>
+              <p>{courseData.targetAudience}</p>
+            </section>
+          )}
 
           <div className="details-right">
             <div className="price-card">
@@ -349,11 +421,13 @@ function LessonViewer() {
               </div>
               <div className="info-row">
                 <span className="label">Instructor</span>
-                <span className="value">{courseData.instructorName || "Wade Warren"}</span>
+                <span className="value">
+                  {courseData.instructorName || "Wade Warren"}
+                </span>
               </div>
               <div className="info-row">
                 <span className="label">Ratings</span>
-                <span className="value stars">⭐⭐⭐⭐⭐</span>
+                <CourseStars rating={courseData.averageRating} />
               </div>
               <div className="info-row">
                 <span className="label">Duration</span>
@@ -361,7 +435,9 @@ function LessonViewer() {
               </div>
               <div className="info-row">
                 <span className="label">Lessons</span>
-                <span className="value">{courseData.lessonCount || courseData.lessons?.length || 0}</span>
+                <span className="value">
+                  {courseData.lessonCount || courseData.lessons?.length || 0}
+                </span>
               </div>
               <div className="info-row">
                 <span className="label">Quizzes</span>
@@ -388,12 +464,15 @@ function LessonViewer() {
         <section className="similar-courses">
           <h2>Similar Courses</h2>
           <div className="courses-grid-similar">
-            {similarCourses.map(course => (
+            {similarCourses.map((course) => (
               <div key={course.id} className="similar-course-card">
-                <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=200" alt={course.title} />
+                <img
+                  src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=200"
+                  alt={course.title}
+                />
                 <div className="course-info-similar">
                   <h4>{course.title}</h4>
-                  <div className="stars">⭐⭐⭐⭐⭐</div>
+                  <CourseStars rating={course.averageRating} />
                   <div className="course-footer-similar">
                     <span className="price">{course.price}</span>
                     <button className="cart-btn">🛒</button>
