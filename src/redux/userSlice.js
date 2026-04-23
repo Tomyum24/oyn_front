@@ -11,8 +11,10 @@ const initialState = {
 function normalizeUser(user) {
     if (!user) return user;
     const rawRole = (user.role || "").toLowerCase();
-    // Бэкенд может присылать "user" вместо "student" — считаем их одинаковыми
-    const role = rawRole === "user" ? "student" : rawRole;
+    // Нормализация ролей: бэкенд хранит TEACHER, фронт использует "professor"
+    const role = rawRole === "user" ? "student"
+        : rawRole === "teacher" ? "professor"
+        : rawRole;
 
     // companyName: некоторые бэкенды присылают fullName вместо companyName
     const companyName = user.companyName || (role === "company" ? user.fullName : undefined);

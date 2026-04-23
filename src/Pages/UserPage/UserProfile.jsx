@@ -1,69 +1,61 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { toast } from "react-toastify";
-import 'react-toastify/dist/ReactToastify.css';
+import { useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { apiFetch } from "../../lib/api";
+import "./UserPage.css";
+import Sidebar from "./ui/sidebar";
+import TeacherDashboard from "./ui/TeacherDashboard";
 
 function UserProfile() {
     const user = useSelector((state) => state.user.user);
     const { id } = useParams();
-    const navigate = useNavigate();
 
     const [profile, setProfile] = useState(null);
+    const [enrollments, setEnrollments] = useState([]);
+    const [activeTab, setActiveTab] = useState("courses");
 
     useEffect(() => {
-        apiFetch(`/api/users/${id}`)
-            .then(data => setProfile(data))
-            .catch(() => toast.error("Failed to load profile"));
-    }, [id]);
+        apiFetch(`/api/auth/me`).then(setProfile).catch(() => {});
 
-    if (!profile) return <p style={{ padding: "2rem" }}>Loading...</p>;
+        if (user?.email) {
+            apiFetch(`/api/enrollments?email=${encodeURIComponent(user.email)}`)
+                .then(setEnrollments)
+                .catch(() => {});
+        }
+    }, [id, user?.email]);
+
+    if (!profile) return <p>Loading...</p>;
+
+    const isTeacher = user?.role === "professor";
 
     return (
-        <div className="theme-dark">
-            <section className="home" id="home">
-                <div className="home-img">
-                    <img
-                        src={
-                            profile.avatarUrl
-                                ? `/img/IndexPage/${profile.avatarUrl}`
-                                : "/img/IndexPage/default-avatar.jpg"
-                        }
-                        className="profile-avatar"
-                        alt="Avatar"
-                    />
-                </div>
+        <div className="dashboard">
+            <Sidebar profile={profile} activeTab={activeTab} setActiveTab={setActiveTab} isTeacher={isTeacher} />
 
-                <div className="home-container">
-                    <h1>USER PROFILE</h1>
-                    <div className="home-content">
-                        <h2 className="profile-username">
-                            {profile.username}
-                        </h2>
-                        <p><strong>Email:</strong> {profile.email}</p>
-                        <p><strong>Role:</strong> {profile.role}</p>
-
-                        {user && user.id === profile.id && (
-                            <>
-                                <p><strong>Balance:</strong> {profile.balance} KZT</p>
-                                <button className="edit-btn">
-                                    <Link to={`/refill-balance/${profile.id}`}>Refill Balance</Link>
-                                </button>
-                                <br /><br />
-                                <p>Change password:</p>
-                                <button className="profile-btn" onClick={() => navigate("/edit")}>
-                                    Change
-                                </button>
-                            </>
-                        )}
-                    </div>
-                </div>
-            </section>
-
-            <button className="back-btn" onClick={() => navigate("/")}>
-                Back
-            </button>
+            <div className="content">
+                {isTeacher && activeTab === "courses" ? (
+                    <TeacherDashboard />
+                ) : (
+                    <>
+                        <div className="courses-grid">
+                            {enrollments.length === 0 && (
+                                <p>You have no enrolled courses yet.</p>
+                            )}
+                            {enrollments.map((enrollment) => (
+                                <div key={enrollment.enrollmentId} className="course-card">
+                                    <div className="course-info">
+                                        <h3>{enrollment.courseTitle}</h3>
+                                        <p className="author">{enrollment.courseSlug}</p>
+                                        <span className={`tag status-${enrollment.status?.toLowerCase()}`}>
+                                            {enrollment.status}
+                                        </span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </>
+                )}
+            </div>
         </div>
     );
 }

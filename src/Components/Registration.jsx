@@ -76,11 +76,13 @@ function Registration() {
       fullName = formData.companyName.trim();
     }
 
+    const ROLE_MAP = { student: "STUDENT", professor: "TEACHER", company: "COMPANY" };
+
     const newUser = {
       fullName,
       email: formData.email,
       password: formData.password,
-      role: role.toUpperCase(),
+      role: ROLE_MAP[role] ?? role.toUpperCase(),
     };
 
     setLoading(true);
@@ -146,11 +148,11 @@ function Registration() {
             <div className="reg-card" onClick={() => handleRoleChange("professor")}>
               <div
                 className="reg-card-background"
-                style={{ backgroundImage: 'url(img/IndexPage/professor.jpg)' }}
+                style={{ backgroundImage: 'url(img/IndexPage/professor.png)' }}
               >
                 <div className="reg-content">
                   <div className="reg-card-category">role</div>
-                  <h3 className="reg-card-heading">PROFESSOR</h3>
+                  <h3 className="reg-card-heading">TEACHER</h3>
                 </div>
               </div>
             </div>
