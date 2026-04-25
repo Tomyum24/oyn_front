@@ -7,6 +7,7 @@ const ROLE_LABELS = {
     company: "Company",
     professor: "Teacher",
     student: "Student",
+    admin: "Admin",
 };
 
 function Header() {
@@ -35,6 +36,8 @@ function Header() {
                         <Link to="/">Home</Link>
                         <Link to="/courses">Courses Catalog</Link>
                         <Link to="/about">About Platform</Link>
+                        {user && <Link to="/dashboard">Dashboard</Link>}
+                        {user?.role === "admin" && <Link to="/admin">Admin</Link>}
                     </div>
                     
                     <ThemeToggle />
@@ -42,7 +45,7 @@ function Header() {
                     {user ? (
                         <div className="navbar-buttons">
                             <Link
-                                to={`/profile/${profileRole}/${user.id}`}
+                                to="/dashboard"
                                 className="navbar-profile-btn"
                                 title={`${displayName} (${ROLE_LABELS[profileRole] ?? profileRole})`}
                             >
