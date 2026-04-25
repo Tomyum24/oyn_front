@@ -20,11 +20,13 @@ const EMPTY_FORM = {
     price: "",
 };
 
+// ─── Course form (create / edit) ─────────────────────────────────────────────
+
 function CourseForm({ initial, onSubmit, onClose, loading, submitLabel }) {
     const [form, setForm] = useState(initial || EMPTY_FORM);
 
     function set(field, value) {
-        setForm(f => ({ ...f, [field]: value }));
+        setForm((f) => ({ ...f, [field]: value }));
     }
 
     async function handleSubmit(e) {
@@ -43,7 +45,7 @@ function CourseForm({ initial, onSubmit, onClose, loading, submitLabel }) {
                     <label>Title *</label>
                     <input
                         value={form.title}
-                        onChange={e => set("title", e.target.value)}
+                        onChange={(e) => set("title", e.target.value)}
                         placeholder="e.g., Introduction to React"
                         maxLength={180}
                         required
@@ -54,7 +56,7 @@ function CourseForm({ initial, onSubmit, onClose, loading, submitLabel }) {
                     <input
                         type="number" min="1" max="1000"
                         value={form.durationHours}
-                        onChange={e => set("durationHours", Number(e.target.value))}
+                        onChange={(e) => set("durationHours", Number(e.target.value))}
                         required
                     />
                 </div>
@@ -64,7 +66,7 @@ function CourseForm({ initial, onSubmit, onClose, loading, submitLabel }) {
                 <label>Subtitle</label>
                 <input
                     value={form.subtitle}
-                    onChange={e => set("subtitle", e.target.value)}
+                    onChange={(e) => set("subtitle", e.target.value)}
                     placeholder="Short tagline for the course"
                     maxLength={240}
                 />
@@ -74,7 +76,7 @@ function CourseForm({ initial, onSubmit, onClose, loading, submitLabel }) {
                 <label>Description *</label>
                 <textarea
                     value={form.description}
-                    onChange={e => set("description", e.target.value)}
+                    onChange={(e) => set("description", e.target.value)}
                     placeholder="What will students learn? What are the prerequisites?"
                     rows={5}
                     maxLength={2000}
@@ -86,16 +88,16 @@ function CourseForm({ initial, onSubmit, onClose, loading, submitLabel }) {
             <div className="lms-field-row">
                 <div className="lms-field">
                     <label>Level</label>
-                    <select value={form.level} onChange={e => set("level", e.target.value)}>
-                        {LEVEL_OPTIONS.map(l => (
+                    <select value={form.level} onChange={(e) => set("level", e.target.value)}>
+                        {LEVEL_OPTIONS.map((l) => (
                             <option key={l} value={l}>{l.charAt(0) + l.slice(1).toLowerCase()}</option>
                         ))}
                     </select>
                 </div>
                 <div className="lms-field">
                     <label>Language *</label>
-                    <select value={form.locale} onChange={e => set("locale", e.target.value)}>
-                        {LOCALE_OPTIONS.map(o => (
+                    <select value={form.locale} onChange={(e) => set("locale", e.target.value)}>
+                        {LOCALE_OPTIONS.map((o) => (
                             <option key={o.value} value={o.value}>{o.label}</option>
                         ))}
                     </select>
@@ -110,7 +112,7 @@ function CourseForm({ initial, onSubmit, onClose, loading, submitLabel }) {
                     step="0.01"
                     placeholder="Leave empty for free"
                     value={form.price}
-                    onChange={e => set("price", e.target.value)}
+                    onChange={(e) => set("price", e.target.value)}
                 />
                 <small>Leave empty if the course is free</small>
             </div>
@@ -153,6 +155,113 @@ function CourseModal({ title, initial, onClose, onSubmit }) {
     );
 }
 
+// ─── Lesson edit modal ───────────────────────────────────────────────────────
+
+function parseDurationToMinutes(str) {
+    const parts = str.trim().split(":").map(Number);
+    if (parts.some(isNaN)) return 0;
+    if (parts.length === 2) return parts[0] * 60 + parts[1];
+    if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+    return 0;
+}
+
+function LessonEditModal({ lesson, courseSlug, onClose, onSaved }) {
+    const [form, setForm] = useState({
+        title: lesson.title || "",
+        summary: lesson.summary || "",
+        videoUrl: lesson.videoUrl || "",
+        duration: lesson.durationMinutes
+            ? `${String(Math.floor(lesson.durationMinutes / 60)).padStart(2, "0")}:${String(lesson.durationMinutes % 60).padStart(2, "0")}`
+            : "",
+    });
+    const [loading, setLoading] = useState(false);
+
+    function set(field, value) {
+        setForm((f) => ({ ...f, [field]: value }));
+    }
+
+    async function handleSubmit(e) {
+        e.preventDefault();
+        const durationMinutes = parseDurationToMinutes(form.duration);
+        if (!durationMinutes) { toast.error("Enter valid duration (MM:SS or HH:MM:SS)"); return; }
+        setLoading(true);
+        try {
+            const updated = await apiFetch(
+                `/api/teacher/courses/${courseSlug}/lessons/${lesson.slug}`,
+                {
+                    method: "PUT",
+                    body: JSON.stringify({
+                        title: form.title.trim(),
+                        summary: form.summary.trim(),
+                        content: form.summary.trim() || form.title.trim(),
+                        videoUrl: form.videoUrl.trim() || undefined,
+                        durationMinutes,
+                    }),
+                }
+            );
+            toast.success("Lesson updated!");
+            onSaved(updated);
+        } catch (err) {
+            toast.error(err.message || "Failed to update lesson");
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    return (
+        <div className="lms-modal-overlay">
+            <div className="lms-modal" style={{ width: 520 }}>
+                <h2>Edit Lesson</h2>
+                <form onSubmit={handleSubmit} className="lms-form">
+                    <div className="lms-field">
+                        <label>Title *</label>
+                        <input
+                            value={form.title}
+                            onChange={(e) => set("title", e.target.value)}
+                            required
+                        />
+                    </div>
+                    <div className="lms-field">
+                        <label>Video URL</label>
+                        <input
+                            type="url"
+                            placeholder="https://www.youtube.com/watch?v=..."
+                            value={form.videoUrl}
+                            onChange={(e) => set("videoUrl", e.target.value)}
+                        />
+                    </div>
+                    <div className="lms-field">
+                        <label>Description</label>
+                        <textarea
+                            value={form.summary}
+                            onChange={(e) => set("summary", e.target.value)}
+                            rows={3}
+                        />
+                    </div>
+                    <div className="lms-field">
+                        <label>Duration *</label>
+                        <input
+                            placeholder="e.g., 15:30"
+                            value={form.duration}
+                            onChange={(e) => set("duration", e.target.value)}
+                            required
+                        />
+                        <small>Format: MM:SS or HH:MM:SS</small>
+                    </div>
+                    <div className="lms-form-actions">
+                        <button type="submit" className="lms-btn-primary" disabled={loading}>
+                            {loading ? "Saving…" : "Save Changes"}
+                        </button>
+                        <button type="button" className="lms-btn-ghost" onClick={onClose}>Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
+
+// ─── Status badge ────────────────────────────────────────────────────────────
+
 function StatusBadge({ status }) {
     const map = {
         DRAFT: { label: "Draft", cls: "lms-status-draft" },
@@ -164,11 +273,14 @@ function StatusBadge({ status }) {
     return <span className={`lms-status ${s.cls}`}>{s.label}</span>;
 }
 
+// ─── Course row ───────────────────────────────────────────────────────────────
+
 function CourseRow({ course, onUpdated, onDeleted }) {
     const [expanded, setExpanded] = useState(false);
     const [lessons, setLessons] = useState(null);
     const [lessonTab, setLessonTab] = useState("videos");
     const [editing, setEditing] = useState(false);
+    const [editingLesson, setEditingLesson] = useState(null);
     const [actionLoading, setActionLoading] = useState(null);
 
     async function loadLessons() {
@@ -183,7 +295,7 @@ function CourseRow({ course, onUpdated, onDeleted }) {
 
     function toggle() {
         if (!expanded) loadLessons();
-        setExpanded(v => !v);
+        setExpanded((v) => !v);
     }
 
     async function doAction(action, successMsg) {
@@ -213,7 +325,7 @@ function CourseRow({ course, onUpdated, onDeleted }) {
         }
     }
 
-    async function handleEdit(form) {
+    async function handleCourseEdit(form) {
         try {
             const updated = await apiFetch(`/api/teacher/courses/${course.slug}`, {
                 method: "PUT",
@@ -228,14 +340,31 @@ function CourseRow({ course, onUpdated, onDeleted }) {
         }
     }
 
+    async function handleLessonDelete(lesson) {
+        if (!window.confirm(`Delete lesson "${lesson.title}"? This cannot be undone.`)) return;
+        try {
+            await apiFetch(`/api/teacher/courses/${course.slug}/lessons/${lesson.slug}`, { method: "DELETE" });
+            toast.success("Lesson deleted");
+            setLessons((prev) => prev.filter((l) => l.slug !== lesson.slug));
+            onUpdated({ ...course, lessonCount: Math.max(0, (course.lessonCount || 1) - 1) });
+        } catch (err) {
+            toast.error(err.message || "Failed to delete lesson");
+        }
+    }
+
+    function handleLessonSaved(updated) {
+        setLessons((prev) => prev.map((l) => l.slug === updated.slug ? updated : l));
+        setEditingLesson(null);
+    }
+
+    const canSubmit = course.status === "DRAFT" || course.status === "REJECTED";
     const canEdit = course.status === "DRAFT" || course.status === "REJECTED";
-    const canPublish = course.status === "DRAFT" || course.status === "REJECTED";
     const canDelete = course.status === "DRAFT";
     const canWithdraw = course.status === "PENDING_REVIEW";
     const isPublished = course.status === "PUBLISHED";
 
-    const videoLessons = (lessons || []).filter(l => l.hasVideo || l.videoUrl);
-    const assessmentLessons = (lessons || []).filter(l => {
+    const videoLessons = (lessons || []).filter((l) => l.hasVideo || l.videoUrl);
+    const assessmentLessons = (lessons || []).filter((l) => {
         try { JSON.parse(l.content); return true; } catch { return false; }
     });
 
@@ -250,6 +379,9 @@ function CourseRow({ course, onUpdated, onDeleted }) {
                             {course.level && <span className="lms-tag">{course.level}</span>}
                             {course.locale && <span className="lms-tag">{course.locale.toUpperCase()}</span>}
                             {course.durationHours && <span className="lms-tag">{course.durationHours}h</span>}
+                            {course.price != null
+                                ? <span className="lms-tag">${Number(course.price).toFixed(2)}</span>
+                                : <span className="lms-tag">Free</span>}
                         </div>
                     </div>
                     <div className="lms-course-meta">
@@ -259,28 +391,26 @@ function CourseRow({ course, onUpdated, onDeleted }) {
                     </div>
                 </div>
 
-                {/* Rejection reason */}
                 {course.status === "REJECTED" && course.rejectionReason && (
                     <div className="lms-rejection-reason">
                         <strong>Rejection reason:</strong> {course.rejectionReason}
                     </div>
                 )}
 
-                {/* Action buttons */}
                 <div className="lms-course-actions">
                     {isPublished && (
                         <Link to={`/courses/${course.slug}`} className="lms-btn-success" target="_blank">
                             View in Catalog →
                         </Link>
                     )}
-                    {canPublish && (
+                    {canSubmit && (
                         <button
                             className="lms-btn-success"
-                            disabled={actionLoading === "publish" || course.lessonCount === 0}
-                            onClick={() => doAction("publish", "Course published!")}
+                            disabled={actionLoading === "submit" || course.lessonCount === 0}
+                            onClick={() => doAction("submit", "Course submitted for review!")}
                             title={course.lessonCount === 0 ? "Add at least one lesson first" : ""}
                         >
-                            {actionLoading === "publish" ? "Publishing…" : "Publish"}
+                            {actionLoading === "submit" ? "Submitting…" : "Submit for Review"}
                         </button>
                     )}
                     {canEdit && (
@@ -308,7 +438,6 @@ function CourseRow({ course, onUpdated, onDeleted }) {
                     )}
                 </div>
 
-                {/* Lessons */}
                 {expanded && (
                     <div className="lms-course-body">
                         <div className="lms-lesson-tabs">
@@ -325,7 +454,7 @@ function CourseRow({ course, onUpdated, onDeleted }) {
                         {lessons !== null && lessonTab === "videos" && (
                             videoLessons.length === 0
                                 ? <p className="lms-empty">No video lessons yet. Use "Upload Video" tab to add one.</p>
-                                : videoLessons.map(l => (
+                                : videoLessons.map((l) => (
                                     <div key={l.id} className="lms-lesson-item">
                                         <div>
                                             <strong>{l.title}</strong>
@@ -336,6 +465,8 @@ function CourseRow({ course, onUpdated, onDeleted }) {
                                                 <span>⏱ {String(Math.floor(l.durationMinutes / 60)).padStart(2, "0")}:{String(l.durationMinutes % 60).padStart(2, "0")}</span>
                                             )}
                                             {l.createdAt && <span>📅 {l.createdAt.slice(0, 10)}</span>}
+                                            <button className="lms-btn-outline" style={{ padding: "2px 10px", fontSize: 12 }} onClick={() => setEditingLesson(l)}>Edit</button>
+                                            <button className="lms-btn-danger" style={{ padding: "2px 10px", fontSize: 12 }} onClick={() => handleLessonDelete(l)}>Delete</button>
                                         </div>
                                     </div>
                                 ))
@@ -344,9 +475,12 @@ function CourseRow({ course, onUpdated, onDeleted }) {
                         {lessons !== null && lessonTab === "assessments" && (
                             assessmentLessons.length === 0
                                 ? <p className="lms-empty">No assessments yet. Use "Create Assessment" tab to add one.</p>
-                                : assessmentLessons.map(l => (
+                                : assessmentLessons.map((l) => (
                                     <div key={l.id} className="lms-lesson-item">
                                         <strong>{l.title}</strong>
+                                        <div className="lms-lesson-meta">
+                                            <button className="lms-btn-danger" style={{ padding: "2px 10px", fontSize: 12 }} onClick={() => handleLessonDelete(l)}>Delete</button>
+                                        </div>
                                     </div>
                                 ))
                         )}
@@ -367,12 +501,23 @@ function CourseRow({ course, onUpdated, onDeleted }) {
                         price: course.price != null ? String(course.price) : "",
                     }}
                     onClose={() => setEditing(false)}
-                    onSubmit={handleEdit}
+                    onSubmit={handleCourseEdit}
+                />
+            )}
+
+            {editingLesson && (
+                <LessonEditModal
+                    lesson={editingLesson}
+                    courseSlug={course.slug}
+                    onClose={() => setEditingLesson(null)}
+                    onSaved={handleLessonSaved}
                 />
             )}
         </>
     );
 }
+
+// ─── Teacher my courses panel ─────────────────────────────────────────────────
 
 function TeacherMyCourses() {
     const [courses, setCourses] = useState([]);
@@ -389,7 +534,7 @@ function TeacherMyCourses() {
                 body: JSON.stringify(form),
             });
             toast.success("Course created!");
-            setCourses(prev => [course, ...prev]);
+            setCourses((prev) => [course, ...prev]);
             setShowCreate(false);
         } catch (err) {
             toast.error(err.message || "Failed to create course");
@@ -398,11 +543,11 @@ function TeacherMyCourses() {
     }
 
     function handleUpdated(updated) {
-        setCourses(prev => prev.map(c => c.slug === updated.slug ? updated : c));
+        setCourses((prev) => prev.map((c) => c.slug === updated.slug ? updated : c));
     }
 
     function handleDeleted(slug) {
-        setCourses(prev => prev.filter(c => c.slug !== slug));
+        setCourses((prev) => prev.filter((c) => c.slug !== slug));
     }
 
     return (
@@ -413,7 +558,7 @@ function TeacherMyCourses() {
                     <p className="lms-subtitle" style={{ marginBottom: 0 }}>
                         {courses.length} course{courses.length !== 1 ? "s" : ""}
                         {" · "}
-                        {courses.filter(c => c.status === "PUBLISHED").length} published
+                        {courses.filter((c) => c.status === "PUBLISHED").length} published
                     </p>
                 </div>
                 <button className="lms-btn-primary" onClick={() => setShowCreate(true)}>+ New Course</button>
@@ -421,7 +566,7 @@ function TeacherMyCourses() {
 
             {courses.length === 0
                 ? <p className="lms-empty">You haven't created any courses yet. Click "+ New Course" to start.</p>
-                : courses.map(c => (
+                : courses.map((c) => (
                     <CourseRow
                         key={c.id}
                         course={c}

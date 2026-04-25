@@ -18,6 +18,9 @@ import CourseLandingPage from "./Pages/CoursePage/CourseLandingPage";
 import LessonViewer from "./Pages/LessonPage/LessonViewer";
 import VerifyEmail from "./Pages/VerifyEmailPage/VerifyEmail";
 import AboutPlatform from "./Pages/About/AboutPlatform";
+import UserPage from "./Pages/UserPage/UserPage";
+import AdminPage from "./Pages/AdminPage/AdminPage";
+import RequireRole from "./Components/RequireRole";
 
 export const AuthContext = createContext();
 export const CourseContext = createContext();
@@ -70,6 +73,20 @@ function App() {
               <Route path="/add-vacancy" element={<AddVacancy />} />
               <Route path="/all-vacancies/:id" element={<Vacancies />} />
               <Route path="/edit" element={<Edit />} />
+
+              {/* Dashboard */}
+              <Route path="/dashboard" element={
+                <RequireRole roles={["student", "professor", "company", "admin"]}>
+                  <UserPage />
+                </RequireRole>
+              } />
+
+              {/* Admin */}
+              <Route path="/admin" element={
+                <RequireRole roles={["admin"]}>
+                  <AdminPage />
+                </RequireRole>
+              } />
 
               {/* eLearning Routes */}
               <Route path="/courses" element={<CourseCatalog />} />
