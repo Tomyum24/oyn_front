@@ -5,9 +5,9 @@
 - Repository in this workspace: `OrdaSkills` / `elearning-backend`
 - Repository role: backend source of truth
 - Canonical frontend: external `oyn_front` / `jiyuu` React project, not stored in this repo
-- Audit date: `2026-04-15`
+- Audit date: `2026-04-23` (security audit pass performed; all fixes applied)
 - Audit method: local backend repo inspection plus user-provided frontend architecture notes
-- Runtime verification status: targeted backend integration coverage for course progress was rerun in this workspace; the external frontend was not rerun here
+- Runtime verification status: targeted backend integration coverage for course progress was rerun in this workspace; security audit and fixes applied in branch `feat/security-audit-and-fixes`; the external frontend was not rerun here
 - Current default backend profile: `local`
 - Canonical schema source: `src/main/resources/db/migration/*.sql`
 - API contract source of truth: backend controllers, DTOs, security config, YAML profiles, and tests
@@ -30,17 +30,20 @@ Orda Skills is a Kazakhstan-focused e-learning MVP whose stable contract now liv
 
 The backend currently provides:
 
-1. JWT register/login/current-user flows,
+1. JWT register/login/current-user flows with **email verification**,
 2. public course catalog and course landing endpoints,
 3. lesson viewer payloads including `videoUrl`,
 4. public enrollment creation with lead-shell support,
 5. authenticated enrollment listing,
-6. authenticated course progress tracking with explicit lesson steps,
-7. admin course CRUD with moderation (publish/reject) workflows,
-8. admin lesson video upload, completion, and delete workflows,
-9. teacher course and lesson management with an ownership-gated publication lifecycle.
+6. **course rating** (1–5 stars) submitted by enrolled students,
+7. authenticated course progress tracking with explicit lesson steps,
+8. admin course CRUD with moderation (publish/reject) workflows,
+9. admin lesson video upload, completion, and delete workflows,
+10. teacher course and lesson management with an ownership-gated publication lifecycle,
+11. **course pricing** — teacher-set optional price on each course; `null` means free,
+12. **append-only audit trail** — every admin mutation is recorded in `audit_events` with actor, action, entity, and a JSON payload snapshot.
 
-The backend supports three user roles: `STUDENT`, `TEACHER`, and `ADMIN`.
+The backend supports four user roles: `STUDENT`, `TEACHER`, `COMPANY`, and `ADMIN`.
 
 The frontend is an external concern:
 
@@ -84,8 +87,9 @@ Important consequence:
 | Route | Method | Auth | Purpose | Frontend handling notes |
 | --- | --- | --- | --- | --- |
 | `/api/health` | GET | Public | Liveness probe | Safe for lightweight connectivity checks |
-| `/api/auth/register` | POST | Public | Create account or upgrade a lead-shell user | Expect `201` with auth payload; rate-limited |
-| `/api/auth/login` | POST | Public | Exchange credentials for JWT | Expect generic invalid-credentials errors; rate-limited |
+| `/api/auth/register` | POST | Public | Create account or upgrade a lead-shell user | Returns `201 { "message": "..." }` when email verification is enabled; returns `201 AuthResponse` on local profile (verification disabled). Rate-limited. |
+| `/api/auth/verify` | GET | Public | Verify email via token from link | `?token=` query param; returns `200 AuthResponse` (JWT) on success; `400` for invalid/expired token |
+| `/api/auth/login` | POST | Public | Exchange credentials for JWT | Returns `403` if email not verified; generic `401` for bad credentials; rate-limited |
 | `/api/auth/me` | GET | Authenticated | Return current user snapshot | On `401`, clear stored token and re-auth |
 | `/api/courses` | GET | Public | Catalog listing (PUBLISHED only) | Use as the source of truth for course cards |
 | `/api/courses/{slug}` | GET | Public | Course landing page | Enrolled users can see non-PUBLISHED courses; principal is optional |
@@ -96,8 +100,9 @@ Important consequence:
 | `/api/progress/courses/{courseSlug}/start` | POST | Authenticated + enrolled | Start/resume tracked attempt | Increments attempt count only for new attempts |
 | `/api/progress/courses/{courseSlug}/current-step` | PUT | Authenticated + enrolled | Persist active lesson focus | Expects `{ "lessonSlug": "..." }` |
 | `/api/progress/courses/{courseSlug}/steps/{lessonSlug}/complete` | POST | Authenticated + enrolled | Complete one progress step | Recalculates counters and percent |
-| `/api/progress/courses/{courseSlug}/complete` | POST | Authenticated + enrolled | Complete whole course | Supports zero-step completion |
+| `/api/progress/courses/{courseSlug}/complete` | POST | Authenticated + enrolled | Complete whole course | Service rejects with `400` if any lesson steps are not yet completed; zero-step courses (no lessons) pass the guard automatically |
 | `/api/progress/courses/{courseSlug}/reset` | POST | Authenticated + enrolled | Reset progress | Prepares next attempt without incrementing count yet |
+| `/api/courses/{slug}/ratings` | POST | Authenticated + enrolled | Submit or update a star rating (1–5) | Upsert semantics; `204` on success; `403` if not enrolled |
 
 ### Admin routes (`ROLE_ADMIN` required)
 
@@ -137,9 +142,9 @@ Important consequence:
 ### Course status lifecycle
 
 ```
-DRAFT ──(submit)──► PENDING_REVIEW ──(publish)──► PUBLISHED
+DRAFT ──(submit)──► PENDING_REVIEW ──(admin publish)──► PUBLISHED
   ▲                       │
-  │        (withdraw)     │ (reject, with reason)
+  │        (withdraw)     │ (admin reject, with reason)
   │◄──────────────────────┤
   │                       ▼
   └──────────────── REJECTED
@@ -147,7 +152,7 @@ DRAFT ──(submit)──► PENDING_REVIEW ──(publish)──► PUBLISHED
 
 - `DRAFT`: teacher is building; not visible in the public catalog.
 - `PENDING_REVIEW`: submitted for admin review; locked for teacher edits.
-- `PUBLISHED`: admin-approved; visible in `/api/courses` catalog.
+- `PUBLISHED`: visible in `/api/courses` catalog; set by admin approval only (teacher self-publish endpoint has been removed).
 - `REJECTED`: admin rejected with a mandatory reason; teacher can edit and resubmit.
 - Admin-created and seeded courses default to `PUBLISHED` (V4 migration default).
 
@@ -172,7 +177,7 @@ DRAFT ──(submit)──► PENDING_REVIEW ──(publish)──► PUBLISHED
 | Path | Responsibility | Why it matters |
 | --- | --- | --- |
 | `src/main/java/kz/skills/elearning/config/SecurityConfig.java` | Route authorization and JSON `401/403` behavior | First stop for auth visibility and filter order; `/api/admin/**` → ADMIN, `/api/teacher/**` → TEACHER |
-| `src/main/java/kz/skills/elearning/security/RequestRateLimitFilter.java` | Rate limiting for login/register/enrollment | Frontend must respect `429` behavior; limits only POST on those three paths |
+| `src/main/java/kz/skills/elearning/security/RequestRateLimitFilter.java` | Rate limiting for login/register/enrollment/verify | Frontend must respect `429` behavior; POST login (5/min), POST register (3/min), POST enroll (10/min), GET verify (20/min); client IP taken from `request.getRemoteAddr()` — X-Forwarded-For is NOT trusted |
 | `src/main/java/kz/skills/elearning/security/JwtAuthenticationFilter.java` | JWT parsing and deleted-user handling | Invalid tokens degrade silently to unauthenticated; `401` is emitted downstream by security entry point |
 | `src/main/java/kz/skills/elearning/service/AuthService.java` | Register/login/current-user lifecycle | Defines lead upgrade and generic login errors |
 | `src/main/java/kz/skills/elearning/service/EnrollmentService.java` | Enrollment rules | Defines anonymous enrollment and non-mutation behavior |
@@ -188,9 +193,19 @@ DRAFT ──(submit)──► PENDING_REVIEW ──(publish)──► PUBLISHED
 | `src/main/java/kz/skills/elearning/controller/AdminLessonVideoController.java` | Admin media endpoints | Entry point for admin video upload-init, upload-complete, and delete |
 | `src/main/java/kz/skills/elearning/service/AdminLessonVideoService.java` | Video upload orchestration | Shared by admin and teacher video endpoints |
 | `src/main/java/kz/skills/elearning/entity/CourseStatus.java` | Course publication status enum | DRAFT, PENDING_REVIEW, PUBLISHED, REJECTED |
-| `src/main/java/kz/skills/elearning/entity/UserRole.java` | User role enum | STUDENT, TEACHER, ADMIN |
+| `src/main/java/kz/skills/elearning/entity/UserRole.java` | User role enum | STUDENT, TEACHER, COMPANY, ADMIN |
+| `src/main/java/kz/skills/elearning/controller/CourseRatingController.java` | Course rating endpoint | `POST /api/courses/{slug}/ratings`; upsert semantics |
+| `src/main/java/kz/skills/elearning/service/CourseRatingService.java` | Rating upsert and average recalculation | Validates enrollment before persisting |
+| `src/main/java/kz/skills/elearning/entity/CourseRating.java` | Rating entity | One row per `(course, student)` |
 | `src/main/resources/db/migration/V3__add_course_progress_tracking.sql` | Progress persistence contract | Defines aggregate and per-step schema |
 | `src/main/resources/db/migration/V4__add_teacher_role_and_course_status.sql` | Teacher ownership and course status schema | Adds `owner_id`, `status`, `rejection_reason` to `courses` |
+| `src/main/resources/db/migration/V5__add_email_verification.sql` | Email verification schema | Adds `email_verified`, `verification_token`, `token_expires_at` to `platform_users` |
+| `src/main/resources/db/migration/V6__add_course_price_and_ratings.sql` | Price and ratings schema | Adds `price` to `courses`; creates `course_ratings` table |
+| `src/main/resources/db/migration/V7__add_is_lead_and_verification_index.sql` | Lead-account flag + token index | Adds `is_lead BOOLEAN NOT NULL DEFAULT FALSE` to `platform_users`; index on `verification_token` for O(1) lookups |
+| `src/main/resources/db/migration/V8__add_audit_events.sql` | Audit trail schema | Append-only `audit_events` table; indexes on `(entity_type, entity_id)`, `actor_id`, `occurred_at` |
+| `src/main/java/kz/skills/elearning/entity/AuditEvent.java` | Audit event entity | Does NOT extend `BaseEntity`; fields: `actor`, `action`, `entityType`, `entityId`, `payload` (JSON), `occurredAt` |
+| `src/main/java/kz/skills/elearning/repository/AuditEventRepository.java` | Audit event persistence | JPA repository; write-only in practice (no queries exposed) |
+| `src/main/java/kz/skills/elearning/service/AuditService.java` | Audit record writer | `record()` uses `Propagation.MANDATORY` — rolls back with the parent transaction on failure |
 | `src/main/resources/application.yml` | Shared config | Source of truth for profile default and rate limits |
 | `src/main/resources/application-local.yml` | Local demo config | H2 + in-memory media + local JWT secret |
 | `src/main/resources/application-postgres.yml` | Non-local env-driven config | Fail-closed runtime config for PostgreSQL, S3, and JWT |
@@ -217,6 +232,9 @@ These paths are not in this repo and should be revalidated inside `oyn_front` be
 
 ### Added in this backend repo
 
+- **email verification** on registration: token-gated flow with SMTP delivery via `spring-boot-starter-mail`; `POST /api/auth/register` returns `201 { "message" }` (not JWT) when verification is enabled; `GET /api/auth/verify?token=` validates the token and issues JWT; `POST /api/auth/login` returns `403` if email not yet verified; local profile auto-verifies (no email sent)
+- **V5 database migration**: `email_verified`, `verification_token`, `token_expires_at` columns on `platform_users`
+- **`app.email.*` config**: `verification-enabled`, `base-url`, `from-name`, `token-expiry-hours`; all values driven by env vars with defaults
 - admin course CRUD endpoints and service layer
 - fail-closed non-local configuration using explicit env vars
 - local demo default profile with H2 and in-memory media
@@ -237,23 +255,58 @@ These paths are not in this repo and should be revalidated inside `oyn_front` be
 - **teacher video upload**: teachers can manage videos for their own courses via the same video service
 - **`CourseOwnershipGuard`** utility enforcing that teachers can only act on their own courses
 - **V4 database migration**: `owner_id`, `status`, `rejection_reason` columns on `courses`
+- **course ratings**: `POST /api/courses/{slug}/ratings` — authenticated enrolled students rate a course 1–5; upsert semantics; `CourseRatingService` recalculates the aggregate average after each submission
+- **course pricing**: optional `price` field (`BigDecimal`) on `TeacherCourseRequest` and `TeacherCourseResponse`; `null` means free; exposed in `CourseSummaryResponse` as `price`
+- **`CourseSummaryResponse` extended**: now includes `instructorName`, `enrollmentCount`, `price`, `averageRating`, `ratingCount`
+- **`AdminCourseResponse` extended**: now includes `status` and `ownerEmail`
+- **V5 database migration**: `email_verified`, `verification_token`, `token_expires_at` columns on `platform_users`
+- **V6 database migration**: `price` column on `courses`; `course_ratings` table with `(course_id, student_id, rating)` unique constraint
+- **four user roles**: `STUDENT`, `TEACHER`, `COMPANY`, `ADMIN` (previously three)
 
-### Removed from this repo to eliminate architectural confusion
+### Added in the security audit pass (2026-04-23)
+
+- **Lead-account model** (`is_lead` flag): anonymous enrollment now creates a `PlatformUser` row with `is_lead = true` and no password; registration with the same email promotes the lead to a full account (`is_lead = false`, password set, role assigned); existing full accounts are protected from overwrite
+- **V7 migration**: `is_lead BOOLEAN NOT NULL DEFAULT FALSE` column on `platform_users`; full index on `verification_token` (partial `WHERE` omitted for H2 compatibility — still achieves O(1) lookups)
+- **Audit trail**: `AuditEvent` entity, `AuditEventRepository`, `AuditService` (`Propagation.MANDATORY`); all five `AdminCourseService` mutations (create, update, delete, publish, reject) now write an audit row; payloads serialized via `ObjectMapper` (safe against JSON injection via slug/title/reason)
+- **V8 migration**: append-only `audit_events` table with indexes on `(entity_type, entity_id)`, `actor_id`, `occurred_at`
+- **Private MinIO bucket**: `mc anonymous set none` replaces the former `mc anonymous set download`; videos are now streamed via short-lived presigned GET URLs (30 min); `VideoStorageService` interface extended with `generatePresignedGetUrl(key, duration)`; both `S3VideoStorageService` and `InMemoryVideoStorageService` implement it; `CourseService.getLessonViewer()` now returns a presigned URL instead of a static path
+- **Rate limiting on `GET /api/auth/verify`**: 20 req/min added alongside existing POST limits
+- **IP spoofing fix**: `RequestRateLimitFilter` no longer reads `X-Forwarded-For`; client identity is always `request.getRemoteAddr()`; rate limiting behind a load balancer requires the reverse proxy to set the real IP before the request reaches the app
+- **Rate-limiter memory-leak fix**: stale bucket eviction runs every 1 000 requests via an `AtomicLong` counter; previously buckets grew unbounded
+- **SMTP failure resilience**: `MailException` in `AuthService.register()` is caught and logged; the user row is saved regardless; registration no longer rolls back when SMTP is unavailable
+- **Generic error response**: `GlobalExceptionHandler` no longer exposes `ex.getMessage()` on unhandled exceptions; clients receive `"An unexpected error occurred. Please try again later."`
+- **Explicit JWT algorithm**: `JwtService` now passes `Jwts.SIG.HS256` explicitly to `signWith()`; previously relied on JJWT's implicit algorithm selection
+- **CORS header allowlist**: `WebConfig` changed from `allowedHeaders("*")` to an explicit set: `Authorization`, `Content-Type`, `Accept`, `X-Requested-With`; `maxAge(3600)` added
+- **Security response headers**: `SecurityConfig` now sets `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: camera=(), microphone=(), geolocation()`, `X-Frame-Options: SAMEORIGIN`
+- **`DataSeeder` profile-gated**: `@Profile("local")` added; the seeder cannot run in production or test environments
+- **`RegisterRequest.role` case-insensitive**: pattern changed from `^(STUDENT|TEACHER|COMPANY)$` to `(?i)^(STUDENT|TEACHER|COMPANY)$`
+- **`completeCourseProgress` service-layer guard**: the endpoint no longer requires `ROLE_ADMIN`; instead the service rejects the call with `400` if any lesson steps are not yet `COMPLETED`; zero-lesson courses pass the guard naturally
+- **Credentials sanitized**: real Gmail App Password and PostgreSQL password replaced with `CHANGE_ME` placeholders in `.env`
+
+### Removed from this repo to eliminate architectural confusion or security risk
 
 - the temporary in-repo frontend folder that I had added earlier
 - all documentation claims that this repo stores the canonical frontend
 - all README/blueprint references telling future agents to edit a local frontend here
+- **`POST /api/teacher/courses/{slug}/publish`** — teacher self-publish endpoint removed entirely (ARCH-5); teachers can no longer bypass admin moderation; the only path to `PUBLISHED` is admin approval via `POST /api/admin/courses/{id}/publish`
+- **`TeacherCourseService.publishCourse()`** method removed alongside the endpoint
 
 ### Invalidated assumptions
 
+- `POST /api/auth/register` no longer returns `AuthResponse` in production environments; it returns `{ "message": "..." }` and requires email verification before a JWT is issued
+- login now returns `403 Email not verified` before checking credentials when verification is enabled; frontend must handle this as a distinct non-auth failure, not as a `401`
 - the backend no longer defaults to `postgres`; it now defaults to `local`
 - committed fallback secrets for non-local runtime are no longer the intended behavior
 - login no longer tells passwordless users to register first; it now returns a generic invalid-credentials error
 - anonymous enrollment should not be treated as a profile-update mechanism for existing lead shells
 - `docs/mvp-schema.sql` is not the schema source of truth
 - frontend implementation details must be looked up in `oyn_front`, not inferred from this repo
-- there are now **three roles** (`STUDENT`, `TEACHER`, `ADMIN`), not two; frontend role-based routing must account for `TEACHER`
+- there are now **four roles** (`STUDENT`, `TEACHER`, `COMPANY`, `ADMIN`); frontend role-based routing must account for `TEACHER` and `COMPANY`
 - course visibility in the public catalog is now gated on `PUBLISHED` status; admin-created/seeded courses have `PUBLISHED` as their migration default
+- **teachers can no longer self-publish** — `POST /api/teacher/courses/{slug}/publish` has been removed; the frontend teacher dashboard must not render a "Publish" button; it should only show "Submit for Review"
+- **video URLs in lesson viewer are presigned** — `videoUrl` in `LessonViewerResponse` is now a short-lived S3 presigned URL (30 min expiry); the frontend must not cache or share it; re-fetch the lesson viewer to get a fresh URL when needed
+- **MinIO bucket is private** — direct object URL access without a presigned token returns 403; only presigned GET URLs work for playback
+- **`POST /api/progress/courses/{slug}/complete` is not ADMIN-only** — it is accessible to the enrolled student but the service will return `400` if any lesson steps are incomplete; zero-lesson courses succeed immediately
 
 ## Backend-Side Conflict Resolution Plan
 
@@ -367,11 +420,16 @@ Use these rules to avoid major errors and conflicts:
 17. Treat course progress, step completion, and percent calculation as backend-owned state, not as frontend-derived truth.
 18. Show course status (`DRAFT`, `PENDING_REVIEW`, `PUBLISHED`, `REJECTED`) in the teacher dashboard; surface `rejectionReason` when status is `REJECTED`.
 19. Only render the public course catalog from `/api/courses`; that endpoint returns only `PUBLISHED` courses — do not filter client-side.
+20. `POST /api/auth/register` no longer returns a JWT in production; show a "check your email" screen instead of logging the user in.
+21. Implement a `/verify-email` route that reads the `?token=` query param from the URL, calls `GET /api/auth/verify?token=`, and on `200` stores the returned JWT and redirects to the home/dashboard page.
+22. Handle `403` on login as a distinct "email not verified" state — not as a generic access-denied error. Show messaging that tells the user to check their inbox.
+23. On local dev (profile `local`) registration returns `AuthResponse` directly; the verify route is not needed locally but must still exist in the router.
 
 ## Current State Verified From Source
 
 The following items are directly supported by code in this workspace:
 
+- **email verification** is fully implemented: SMTP send on register, token stored in DB with 24 h expiry, `GET /api/auth/verify?token=` endpoint issues JWT after validation, login blocked with `403` until verified, local profile skips verification and issues JWT immediately; SMTP failures no longer roll back user registration
 - the backend supports all required MVP backend routes plus admin course CRUD, admin media endpoints, and teacher course/lesson management
 - the backend exposes authenticated course progress routes under `/api/progress/courses/**`
 - enrollment bootstraps course progress and per-lesson progress-step rows
@@ -379,16 +437,21 @@ The following items are directly supported by code in this workspace:
 - progress steps stay synchronized with the current lesson set for a course
 - the backend defaults to a self-contained `local` profile
 - non-local runtime expects explicit env vars for PostgreSQL, JWT, and S3-compatible media
-- request rate limiting is present for public auth and enrollment endpoints (POST only)
-- lesson viewer payloads expose `videoUrl`
-- admin course CRUD and moderation (publish/reject) are protected by `ROLE_ADMIN`
-- teacher course and lesson CRUD plus the publication lifecycle are protected by `ROLE_TEACHER`
+- request rate limiting is present for public auth, enrollment, and email-verify endpoints; GET `/api/auth/verify` is limited to 20 req/min; client IP is `request.getRemoteAddr()` only
+- lesson viewer payloads expose `videoUrl` as a 30-minute presigned S3 GET URL for private-bucket videos
+- admin course CRUD and moderation (publish/reject) are protected by `ROLE_ADMIN`; all mutations are recorded in `audit_events`
+- teacher course and lesson CRUD plus the publication lifecycle are protected by `ROLE_TEACHER`; teacher self-publish endpoint has been removed
 - teacher ownership is enforced at the service layer via `CourseOwnershipGuard`; unauthorized access returns `403`
 - course status transitions are guarded server-side: edits only in DRAFT/REJECTED, submissions only from DRAFT/REJECTED, publish/reject only from PENDING_REVIEW
 - admin-created and seeded courses default to `PUBLISHED` status via the V4 migration default
-- V4 database migration adds `owner_id`, `status`, and `rejection_reason` columns to the `courses` table
-- three user roles are defined: `STUDENT`, `TEACHER`, `ADMIN`
-- JSON `401` and `403` responses are emitted by security entry points in `SecurityConfig`
+- V4 migration adds `owner_id`, `status`, `rejection_reason` to `courses`; V5 adds email verification columns; V6 adds price and ratings; V7 adds `is_lead` flag and `verification_token` index; V8 adds `audit_events`
+- four user roles are defined: `STUDENT`, `TEACHER`, `COMPANY`, `ADMIN`
+- `is_lead` flag distinguishes anonymous lead-shell accounts from registered users; registration with a matching email promotes the lead to a full account
+- JSON `401` and `403` responses are emitted by security entry points in `SecurityConfig`; unhandled exceptions return a generic message (no stack trace or `ex.getMessage()` leak)
+- security response headers applied globally: `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, `X-Frame-Options`
+- CORS uses an explicit allowed-header list; wildcard `*` has been removed
+- JWT is signed with an explicit `HS256` algorithm
+- `DataSeeder` only runs under the `local` Spring profile
 - the backend test suite includes coverage for:
   - deleted-user JWT fallback to `401`
   - anonymous enrollment non-mutation
@@ -409,19 +472,31 @@ The following frontend claims come from user-provided architecture notes and wer
 ## Recommended Next Engineering Steps
 
 1. Keep this repo backend-only and do not reintroduce frontend source here unless the architecture is intentionally changed.
-2. Reconcile `oyn_front` against this backend contract using this blueprint as the handoff document.
+2. Reconcile `oyn_front` against this backend contract using this blueprint as the handoff document; in particular, remove any "Publish" button from the teacher UI — the self-publish endpoint no longer exists.
 3. Standardize, in the frontend repo:
    - auth storage strategy,
    - env var naming,
    - API client wrapper,
    - error-handling conventions,
-   - role-based route guards for `STUDENT`, `TEACHER`, and `ADMIN`,
-   - teacher dashboard integrating the course status lifecycle.
+   - role-based route guards for `STUDENT`, `TEACHER`, `COMPANY`, and `ADMIN`,
+   - teacher dashboard integrating the course status lifecycle,
+   - lesson viewer re-fetching presigned URLs before they expire (30-min window).
 4. Add cross-repo smoke verification once the proper toolchains are available:
    - backend tests,
    - frontend tests,
    - one end-to-end login/enroll/lesson/admin CRUD/teacher submit-review check.
 5. Update this blueprint whenever backend contract or frontend integration strategy changes.
+
+### Pending backend TODOs (security / scaling)
+
+| # | Item | Priority |
+|---|---|---|
+| 1 | Implement `POST /api/auth/resend-verification` — users whose initial SMTP delivery failed have no way to request a new token | High |
+| 2 | Add pagination to `AdminCourseService.getCourses()` and `EnrollmentService.getEnrollmentsForAdmin()` | Medium |
+| 3 | Rotate Gmail App Password and PostgreSQL password (currently `CHANGE_ME` placeholders in `.env`) | Immediate (pre-prod) |
+| 4 | Generate JWT secret with `openssl rand -base64 64` and inject via CI/CD secrets, not `.env` | Immediate (pre-prod) |
+| 5 | Configure reverse proxy (`nginx`/Caddy) with `real_ip_header` so `request.getRemoteAddr()` reflects the real client IP behind a load balancer | Before scaling |
+| 6 | Rate limiter is in-process only; does not survive restarts or scale across multiple instances — replace with Redis-backed limiter for multi-instance deployments | Before scaling |
 
 ## Mental Model For Future AI Developers
 
@@ -430,4 +505,8 @@ If you remember only one thing, remember this:
 - this repo is the backend contract source of truth,
 - the frontend lives elsewhere,
 - integration work must be deliberate, contract-driven, and cross-repo aware,
-- there are three roles (`STUDENT`, `TEACHER`, `ADMIN`); the teacher surface lives under `/api/teacher/**` and is separate from admin.
+- there are four roles (`STUDENT`, `TEACHER`, `COMPANY`, `ADMIN`); the teacher surface lives under `/api/teacher/**` and is separate from admin,
+- registration no longer issues a JWT in production; the user must verify their email first via `GET /api/auth/verify?token=`,
+- teachers can no longer self-publish; all courses go through admin moderation,
+- video URLs are short-lived presigned S3 tokens — do not cache or share them,
+- every admin course mutation is recorded in the `audit_events` table.
