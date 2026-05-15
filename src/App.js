@@ -4,7 +4,7 @@ import { createContext, useState, useEffect } from "react";
 import Login from "./Components/Login";
 import Registration from "./Components/Registration";
 import Edit from "./Components/Edit";
-import CompanyPage from "./Pages/CompanyPage/CompanyPage";
+
 import ProfileSwitch from "./Components/ProfileSwitch";
 import AddVacancy from "./Pages/CompanyPage/AddVacancy";
 import Vacancies from "./Pages/CompanyPage/Vacancies";

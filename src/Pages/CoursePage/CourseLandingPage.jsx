@@ -100,7 +100,7 @@ function CourseLandingPage() {
 
     {/* SIDEBAR */}
     <div className={styles.sidebar}>
-      <img src={course.imageUrl} className={styles.sidebarImage} />
+      <img src={course.imageUrl} alt={course.title} className={styles.sidebarImage} />
 
       <div className={styles.price}>
         {course.price != null

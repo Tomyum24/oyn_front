@@ -14,7 +14,7 @@ function AboutPlatform() {
         <section className="about-top">
           <div className="about-images">
             <img
-              src="https://pngimg.com/d/student_PNG124.png"
+              src="https://png.pngtree.com/png-clipart/20250123/original/pngtree-a-cheerful-young-student-with-long-png-image_20325474.png"
               alt=""
               className="img-main"
             />

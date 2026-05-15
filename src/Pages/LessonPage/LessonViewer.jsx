@@ -247,7 +247,7 @@ function LessonViewer() {
     }
 
     loadData();
-  }, [courseSlug, lessonSlug, user]);
+  }, [courseSlug, lessonSlug, user, navigate]);
 
   const isStepCompleted = (slug) => {
     if (!progressData?.steps) return false;
