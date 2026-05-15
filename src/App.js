@@ -17,6 +17,7 @@ import ResetPassword from "./Components/ResetPassword";
 import CourseCatalog from "./Pages/CoursePage/CourseCatalog";
 import CourseLandingPage from "./Pages/CoursePage/CourseLandingPage";
 import LessonViewer from "./Pages/LessonPage/LessonViewer";
+import CheckoutPage from "./Pages/Checkout/CheckoutPage";
 import VerifyEmail from "./Pages/VerifyEmailPage/VerifyEmail";
 import AboutPlatform from "./Pages/About/AboutPlatform";
 import UserPage from "./Pages/UserPage/UserPage";
@@ -95,6 +96,7 @@ function App() {
               <Route path="/courses" element={<CourseCatalog />} />
               <Route path="/courses/:slug" element={<CourseLandingPage />} />
               <Route path="/courses/:courseSlug/lessons/:lessonSlug" element={<LessonViewer />} />
+              <Route path="/checkout/:slug" element={<CheckoutPage />} />
             </Routes>
           </BrowserRouter>
         </div>

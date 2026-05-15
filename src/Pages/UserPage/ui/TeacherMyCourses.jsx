@@ -31,9 +31,11 @@ function CourseForm({ initial, onSubmit, onClose, loading, submitLabel }) {
 
     async function handleSubmit(e) {
         e.preventDefault();
+        const rawPrice = String(form.price ?? "").trim().replace(",", ".");
+        const parsedPrice = parseFloat(rawPrice);
         const payload = {
             ...form,
-            price: form.price !== "" && form.price != null ? Number(form.price) : null,
+            price: rawPrice !== "" && !isNaN(parsedPrice) ? parsedPrice : null,
         };
         await onSubmit(payload);
     }
@@ -107,9 +109,8 @@ function CourseForm({ initial, onSubmit, onClose, loading, submitLabel }) {
             <div className="lms-field">
                 <label>Price (USD)</label>
                 <input
-                    type="number"
-                    min="0"
-                    step="0.01"
+                    type="text"
+                    inputMode="decimal"
                     placeholder="Leave empty for free"
                     value={form.price}
                     onChange={(e) => set("price", e.target.value)}
@@ -530,11 +531,13 @@ function TeacherMyCourses() {
     }, []);
 
     async function handleCreate(form) {
+        console.log("[handleCreate] payload being sent:", JSON.stringify(form));
         try {
             const course = await apiFetch("/api/teacher/courses", {
                 method: "POST",
                 body: JSON.stringify(form),
             });
+            console.log("[handleCreate] response from server:", course);
             toast.success("Course created!");
             setCourses((prev) => [course, ...prev]);
             setShowCreate(false);

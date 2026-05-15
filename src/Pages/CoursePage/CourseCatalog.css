@@ -351,6 +351,10 @@
   opacity: 0.88;
 }
 
+.course-card-buy-btn {
+  background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
+}
+
 /* Pagination */
 .pagination {
   display: flex;

@@ -1,0 +1,437 @@
+.wrapper {
+  background: #f8f9fc;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.container {
+  display: flex;
+  gap: 60px;
+  padding: 60px 80px;
+  max-width: 1100px;
+  margin: 0 auto;
+  width: 100%;
+  flex: 1;
+}
+
+/* LEFT — Payment */
+.paymentSection {
+  flex: 1;
+  background: white;
+  border-radius: 16px;
+  padding: 36px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  height: fit-content;
+}
+
+.sectionTitle {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0 0 12px;
+}
+
+.divider {
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  margin: 0 0 20px;
+}
+
+.label {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 10px;
+  color: #1a1a2e;
+}
+
+.radioGroup {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.radioLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+}
+
+.radioLabel input[type="radio"] {
+  accent-color: #4caf50;
+  width: 16px;
+  height: 16px;
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  margin-bottom: 16px;
+}
+
+.fieldLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.input {
+  padding: 12px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #111827;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.input:focus {
+  border-color: #7c5cfc;
+}
+
+.input::placeholder {
+  color: #9ca3af;
+}
+
+.row {
+  display: flex;
+  gap: 16px;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #374151;
+  cursor: pointer;
+  margin-bottom: 24px;
+}
+
+.checkboxLabel input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+}
+
+.altPayInfo {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+.payBtn {
+  width: 100%;
+  padding: 14px;
+  background: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.payBtn:hover:not(:disabled) {
+  background: #43a047;
+}
+
+.payBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.disclaimer {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 16px;
+  line-height: 1.6;
+}
+
+/* RIGHT — Summary */
+.summarySection {
+  flex: 1;
+  background: white;
+  border-radius: 16px;
+  padding: 36px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  height: fit-content;
+}
+
+.courseRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.courseThumb {
+  width: 70px;
+  height: 70px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid #e5e7eb;
+}
+
+.courseInfo {
+  flex: 1;
+}
+
+.courseTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin: 0 0 4px;
+}
+
+.courseLevel {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.coursePrice {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a2e;
+  white-space: nowrap;
+  margin: 0;
+}
+
+.discountRow {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.discountInput {
+  flex: 1;
+  padding: 11px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+}
+
+.discountInput:focus {
+  border-color: #7c5cfc;
+}
+
+.discountInput::placeholder {
+  color: #9ca3af;
+}
+
+.applyBtn {
+  padding: 11px 20px;
+  background: #6b7280;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.applyBtn:hover {
+  background: #4b5563;
+}
+
+.summaryLine {
+  display: flex;
+  justify-content: space-between;
+  font-size: 15px;
+  color: #374151;
+  padding: 4px 0 16px;
+}
+
+.totalLine {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 16px;
+}
+
+.totalLabel {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0;
+}
+
+.taxNote {
+  font-size: 12px;
+  color: #9ca3af;
+  margin: 4px 0 0;
+}
+
+.totalAmount {
+  font-size: 32px;
+  font-weight: 800;
+  color: #1a1a2e;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+    padding: 30px 20px;
+  }
+}
+
+/* ── Payment Success Screen ─────────────────────────────────── */
+
+.successWrapper {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 60px 20px;
+  flex: 1;
+}
+
+.successCard {
+  background: white;
+  border-radius: 20px;
+  padding: 40px 32px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.07);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.successIcon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #4caf50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+  box-shadow: 0 0 0 12px rgba(76, 175, 80, 0.12);
+}
+
+.successIcon svg {
+  width: 34px;
+  height: 34px;
+}
+
+.successTitle {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 4px 0 0;
+}
+
+.successSubtitle {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0 0 16px;
+  text-align: center;
+}
+
+.receiptBox {
+  width: 100%;
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.receiptRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+
+.receiptLabel {
+  color: #9ca3af;
+}
+
+.receiptValue {
+  font-weight: 600;
+  color: #1a1a2e;
+  text-align: right;
+}
+
+.receiptAmount {
+  font-size: 18px;
+  font-weight: 800;
+  color: #1a1a2e;
+}
+
+.receiptDivider {
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  margin: 4px 0;
+}
+
+.successBadge {
+  background: #dcfce7;
+  color: #16a34a;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+
+.successActions {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.receiptBtn {
+  width: 100%;
+  padding: 14px;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: border-color 0.2s;
+}
+
+.receiptBtn:hover {
+  border-color: #7c5cfc;
+  color: #7c5cfc;
+}
+
+.doneBtn {
+  width: 100%;
+  padding: 14px;
+  background: #1a1a2e;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.doneBtn:hover {
+  opacity: 0.85;
+}
