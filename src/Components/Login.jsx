@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import { useDispatch } from "react-redux";
@@ -10,6 +10,8 @@ import "./Auth.css";
 function Login() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    const location = useLocation();
+    const emailVerified = new URLSearchParams(location.search).get("verified") === "true";
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
@@ -58,6 +60,12 @@ function Login() {
                     <div className="auth-form-box">
                         <h2 className="auth-title">Welcome back</h2>
                         <p className="auth-subtitle">Sign in to your account</p>
+
+                        {emailVerified && (
+                            <div className="auth-verified-banner">
+                                ✓ Email подтверждён — войдите в аккаунт
+                            </div>
+                        )}
 
                         <div className="auth-field">
                             <label className="auth-label">Email</label>

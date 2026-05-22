@@ -178,6 +178,21 @@
   text-decoration: underline;
 }
 
+/* ── Verified banner ───────────────────────────────────────── */
+.auth-verified-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f0fdf4;
+  border: 1.5px solid #86efac;
+  color: #15803d;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 20px;
+}
+
 /* ── Role cards ────────────────────────────────────────────── */
 .auth-role-card {
   display: flex;
