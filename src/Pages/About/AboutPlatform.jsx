@@ -49,7 +49,7 @@ function AboutPlatform() {
             </div>
 
             <button className="cta-btn" onClick={() => { window.location.href = "/courses"; }}>
-              View Courses →
+              View Courses &rarr;
             </button>
           </div>
         </section>
@@ -67,26 +67,26 @@ function AboutPlatform() {
           <span className="tag">TESTIMONIAL</span>
           <h2>Creating A Community Of Life Long Learners.</h2>
 
-          <div className=”testimonial-grid”>
+          <div className="testimonial-grid">
             {[
               {
-                quote: “OYAN completely changed how I approach learning. The courses are structured, practical, and actually helped me land my first tech job.”,
-                name: “Amir Seitkali”,
-                role: “Software Developer”,
+                quote: "OYAN completely changed how I approach learning. The courses are structured, practical, and actually helped me land my first tech job.",
+                name: "Amir Seitkali",
+                role: "Software Developer",
               },
               {
-                quote: “The instructors are top-notch and the platform is incredibly easy to use. I finished two courses in a month and got a promotion right after.”,
-                name: “Dilnoza Yusupova”,
-                role: “Marketing Specialist”,
+                quote: "The instructors are top-notch and the platform is incredibly easy to use. I finished two courses in a month and got a promotion right after.",
+                name: "Dilnoza Yusupova",
+                role: "Marketing Specialist",
               },
               {
-                quote: “I've tried many online platforms, but OYAN stands out for its community and the quality of feedback you get. Highly recommend to anyone serious about growth.”,
-                name: “Nurlan Bekov”,
-                role: “Product Manager”,
+                quote: "I have tried many online platforms, but OYAN stands out for its community and the quality of feedback you get. Highly recommend to anyone serious about growth.",
+                name: "Nurlan Bekov",
+                role: "Product Manager",
               },
             ].map((t, i) => (
-              <div key={i} className=”testimonial-card”>
-                <p>”{t.quote}”</p>
+              <div key={i} className="testimonial-card">
+                <p>&ldquo;{t.quote}&rdquo;</p>
                 <h4>{t.name}</h4>
                 <span>{t.role}</span>
               </div>
