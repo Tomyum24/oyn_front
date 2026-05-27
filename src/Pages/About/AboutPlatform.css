@@ -85,8 +85,8 @@
   display: flex;
   justify-content: space-between;
   background: linear-gradient(90deg, #ff5a3c, #ff7a3c);
-  padding: 30px;
-  border-radius: 50px;
+  padding: 16px 40px;
+  border-radius: 40px;
   color: white;
   margin-bottom: 80px;
 }
@@ -96,7 +96,14 @@
 }
 
 .stat h3 {
-  font-size: 24px;
+  font-size: 18px;
+  margin: 0 0 2px;
+}
+
+.stat p {
+  font-size: 12px;
+  margin: 0;
+  opacity: 0.9;
 }
 
 /* TESTIMONIAL */
