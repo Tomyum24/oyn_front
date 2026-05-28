@@ -266,12 +266,22 @@ function CourseCatalog() {
                           {course.instructorName || "Instructor"}
                         </span>
                       </div>
-                      <Link
-                        to={`/courses/${course.slug}`}
-                        className="course-card-enroll-btn"
-                      >
-                        Enroll →
-                      </Link>
+                      {course.price != null ? (
+                        <Link
+                          to={`/checkout/${course.slug}`}
+                          state={{ course, price: course.price }}
+                          className="course-card-enroll-btn course-card-buy-btn"
+                        >
+                          Buy ${Number(course.price).toFixed(2)}
+                        </Link>
+                      ) : (
+                        <Link
+                          to={`/courses/${course.slug}`}
+                          className="course-card-enroll-btn"
+                        >
+                          Enroll →
+                        </Link>
+                      )}
                     </div>
                   </div>
                 </div>

@@ -75,14 +75,6 @@ function CoursesSlider() {
     }
   };
 
-  const scroll = (dir) => {
-    if (!sliderRef.current) return;
-
-    sliderRef.current.scrollBy({
-      left: dir === "left" ? -300 : 300,
-      behavior: "smooth",
-    });
-  };
 
   return (
     <section className="section">

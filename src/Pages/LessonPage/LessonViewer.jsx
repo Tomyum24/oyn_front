@@ -195,6 +195,22 @@ function LessonViewer() {
         setLessonData(lesson);
         setCourseData(course);
 
+        // Paid course gate: redirect to checkout if not enrolled
+        if (course.price != null) {
+          if (!user) {
+            navigate("/login");
+            return;
+          }
+          try {
+            await apiFetch(`/api/progress/courses/${courseSlug}`);
+          } catch (err) {
+            if (err.status === 403 || err.status === 404) {
+              navigate(`/checkout/${courseSlug}`);
+              return;
+            }
+          }
+        }
+
         if (user) {
           try {
             let progress = await apiFetch(
@@ -213,7 +229,7 @@ function LessonViewer() {
             progress = await apiFetch(`/api/progress/courses/${courseSlug}`);
             setProgressData(progress);
           } catch (err) {
-            // Progress tracking unavailable (not enrolled, etc.) — silent
+            // Progress tracking unavailable — silent
           }
         }
       } catch (err) {
@@ -231,7 +247,7 @@ function LessonViewer() {
     }
 
     loadData();
-  }, [courseSlug, lessonSlug, user]);
+  }, [courseSlug, lessonSlug, user, navigate]);
 
   const isStepCompleted = (slug) => {
     if (!progressData?.steps) return false;

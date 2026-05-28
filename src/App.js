@@ -4,7 +4,7 @@ import { createContext, useState, useEffect } from "react";
 import Login from "./Components/Login";
 import Registration from "./Components/Registration";
 import Edit from "./Components/Edit";
-import CompanyPage from "./Pages/CompanyPage/CompanyPage";
+
 import ProfileSwitch from "./Components/ProfileSwitch";
 import AddVacancy from "./Pages/CompanyPage/AddVacancy";
 import Vacancies from "./Pages/CompanyPage/Vacancies";
@@ -17,6 +17,7 @@ import ResetPassword from "./Components/ResetPassword";
 import CourseCatalog from "./Pages/CoursePage/CourseCatalog";
 import CourseLandingPage from "./Pages/CoursePage/CourseLandingPage";
 import LessonViewer from "./Pages/LessonPage/LessonViewer";
+import CheckoutPage from "./Pages/Checkout/CheckoutPage";
 import VerifyEmail from "./Pages/VerifyEmailPage/VerifyEmail";
 import AboutPlatform from "./Pages/About/AboutPlatform";
 import UserPage from "./Pages/UserPage/UserPage";
@@ -95,6 +96,7 @@ function App() {
               <Route path="/courses" element={<CourseCatalog />} />
               <Route path="/courses/:slug" element={<CourseLandingPage />} />
               <Route path="/courses/:courseSlug/lessons/:lessonSlug" element={<LessonViewer />} />
+              <Route path="/checkout/:slug" element={<CheckoutPage />} />
             </Routes>
           </BrowserRouter>
         </div>

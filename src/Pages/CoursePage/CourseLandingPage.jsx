@@ -22,9 +22,15 @@ function CourseLandingPage() {
       });
   }, [slug]);
 
+  const isPaid = course?.price != null;
+
   const handleEnrollment = async () => {
     if (!user) {
       navigate("/login");
+      return;
+    }
+    if (isPaid) {
+      navigate(`/checkout/${slug}`, { state: { course, price: course.price } });
       return;
     }
     try {
@@ -94,7 +100,7 @@ function CourseLandingPage() {
 
     {/* SIDEBAR */}
     <div className={styles.sidebar}>
-      <img src={course.imageUrl} className={styles.sidebarImage} />
+      <img src={course.imageUrl} alt={course.title} className={styles.sidebarImage} />
 
       <div className={styles.price}>
         {course.price != null
@@ -103,7 +109,9 @@ function CourseLandingPage() {
       </div>
 
       <button className={styles.enrollBtn} onClick={handleEnrollment}>
-        Enroll Now
+        {isPaid
+          ? `Buy Now — $${Number(course.price).toFixed(2)}`
+          : "Enroll Now"}
       </button>
 
       <div>
